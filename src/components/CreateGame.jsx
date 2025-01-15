@@ -15,7 +15,7 @@ const CreateGame = ({ onCreateGame }) => {
 		});
 	};
 	return (
-		<div className="border border-gray-400 bg-white rounded shadow-lg mt-12 px-3 pt-2 pb-4">
+		<div className="border border-gray-400 bg-white rounded shadow-lg mt-6 px-3 pt-2 pb-4">
 			<h1 className="font-semibold text-lg px-1">Create New Game</h1>
 			<hr className="border-0 border-b border-gray-400 shadow-lg my-1" />
 
@@ -26,7 +26,7 @@ const CreateGame = ({ onCreateGame }) => {
 						<button
 							className={`flex-1 p-1 rounded-l ${
 								gameType == "classic"
-									? "bg-green-400 shadow-inner text-white"
+									? "bg-green-400 shadow-inner-soft-dark text-white"
 									: "bg-gray-200 hover:bg-gray-300"
 							}`}
 							onClick={(e) => setGameType("classic")}
@@ -37,7 +37,7 @@ const CreateGame = ({ onCreateGame }) => {
 						<button
 							className={`flex-1 p-1 rounded-r ${
 								gameType == "blitz"
-									? "bg-green-400 shadow-inner text-white"
+									? "bg-green-400 shadow-inner-soft-dark text-white"
 									: "bg-gray-200 hover:bg-gray-300"
 							}`}
 							onClick={(e) => setGameType("blitz")}
@@ -54,7 +54,7 @@ const CreateGame = ({ onCreateGame }) => {
 						<button
 							className={`flex-1 p-1 rounded-l ${
 								allowSpectator
-									? "bg-green-400 shadow-inner text-white"
+									? "bg-green-400 shadow-inner-soft-dark text-white"
 									: "bg-gray-200 hover:bg-gray-300"
 							}`}
 							onClick={(e) => setAllowSpectator(true)}
@@ -65,7 +65,7 @@ const CreateGame = ({ onCreateGame }) => {
 						<button
 							className={`flex-1 p-1 rounded-r ${
 								!allowSpectator
-									? "bg-green-400 shadow-inner text-white"
+									? "bg-green-400 shadow-inner-soft-dark text-white"
 									: "bg-gray-200 hover:bg-gray-300"
 							}`}
 							onClick={(e) => setAllowSpectator(false)}

@@ -17,40 +17,12 @@ const SelectGame = ({ onSelectGame }) => {
 
 			<div className="flex flex-col lg:flex-row gap-x-5 gap-y-2 mt-3">
 				<div className="flex-1">
-					<span className="text-sm text-gray-600 font-medium">Select Opponent</span>
-					<div className="flex text-lg font-medium mt-1 border border-gray-400 rounded">
-						<button
-							className={`flex-1 p-1 rounded-l ${
-								gameOpponent == "ai"
-									? "bg-green-400 shadow-inner text-white"
-									: "bg-gray-200 hover:bg-gray-300"
-							}`}
-							onClick={(e) => setGameOpponent("ai")}
-							disabled={gameOpponent == "ai"}
-						>
-							AI
-						</button>
-						<button
-							className={`flex-1 p-1 rounded-r ${
-								gameOpponent == "online"
-									? "bg-green-400 shadow-inner text-white"
-									: "bg-gray-200 hover:bg-gray-300"
-							}`}
-							onClick={(e) => setGameOpponent("online")}
-							disabled={gameOpponent == "online"}
-						>
-							Random Player
-						</button>
-					</div>
-				</div>
-
-				<div className="flex-1">
 					<span className="text-sm text-gray-600 font-medium">Select Type</span>
 					<div className="flex text-lg font-medium mt-1 border border-gray-400 rounded">
 						<button
 							className={`flex-1 p-1 rounded-l ${
 								gameType == "classic"
-									? "bg-green-400 shadow-inner text-white"
+									? "bg-green-400 shadow-inner-soft-dark text-white"
 									: "bg-gray-200 hover:bg-gray-300"
 							}`}
 							onClick={(e) => setGameType("classic")}
@@ -61,13 +33,40 @@ const SelectGame = ({ onSelectGame }) => {
 						<button
 							className={`flex-1 p-1 rounded-r ${
 								gameType == "blitz"
-									? "bg-green-400 shadow-inner text-white"
+									? "bg-green-400 shadow-inner-soft-dark text-white"
 									: "bg-gray-200 hover:bg-gray-300"
 							}`}
 							onClick={(e) => setGameType("blitz")}
 							disabled={gameType == "blitz"}
 						>
 							Blitz
+						</button>
+					</div>
+				</div>
+				<div className="flex-1">
+					<span className="text-sm text-gray-600 font-medium">Select Opponent</span>
+					<div className="flex text-lg font-medium mt-1 border border-gray-400 rounded">
+						<button
+							className={`flex-1 p-1 rounded-l ${
+								gameOpponent == "ai"
+									? "bg-green-400 shadow-inner-soft-dark text-white"
+									: "bg-gray-200 hover:bg-gray-300"
+							}`}
+							onClick={(e) => setGameOpponent("ai")}
+							disabled={gameOpponent == "ai"}
+						>
+							AI
+						</button>
+						<button
+							className={`flex-1 p-1 rounded-r ${
+								gameOpponent == "online"
+									? "bg-green-400 shadow-inner-soft-dark text-white"
+									: "bg-gray-200 hover:bg-gray-300"
+							}`}
+							onClick={(e) => setGameOpponent("online")}
+							disabled={gameOpponent == "online"}
+						>
+							Random Player
 						</button>
 					</div>
 				</div>

@@ -1,6 +1,6 @@
 import { useRef, useEffect, useState } from "react";
 import SplashScreen from "./components/SplashScreen";
-import Menu from "./components/Menu";
+import MainPage from "./components/MainPage";
 
 export default function App() {
 	const [showSplashScreen, setShowSplashScreen] = useState(true);
@@ -19,7 +19,7 @@ export default function App() {
 	return (
 		<div className="h-screen w-screen bg-gray-50">
 			{showSplashScreen && <SplashScreen />}
-			{showMenu && <Menu />}
+			{showMenu && <MainPage />}
 		</div>
 	);
 }
