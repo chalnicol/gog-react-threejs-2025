@@ -1,25 +1,23 @@
-import { useRef, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import SplashScreen from "./components/SplashScreen";
 import MainPage from "./components/MainPage";
 
 export default function App() {
-	const [showSplashScreen, setShowSplashScreen] = useState(true);
-	const [showMenu, setShowMenu] = useState(false);
+	const [username, setUsername] = useState("");
+	const [isMenuPageVisible, setIsMenuPageVisible] = useState(false);
 
-	const splashTimerRef = useRef(null);
-
-	useEffect(() => {
-		splashTimerRef.current = setTimeout(() => {
-			setShowSplashScreen(false);
-			setShowMenu(true);
-		}, 3000);
-		return () => clearTimeout(splashTimerRef.current);
-	}, []);
-
+	const handleSplashScreenSubmit = (name) => {
+		//..
+		setUsername(name);
+		setIsMenuPageVisible(true);
+	};
 	return (
 		<div className="h-screen w-screen bg-gray-50">
-			{showSplashScreen && <SplashScreen />}
-			{showMenu && <MainPage />}
+			{isMenuPageVisible ? (
+				<MainPage playerName={username} />
+			) : (
+				<SplashScreen onSubmit={handleSplashScreenSubmit} />
+			)}
 		</div>
 	);
 }

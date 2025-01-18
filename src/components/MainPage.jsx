@@ -3,34 +3,146 @@ import CreateGame from "./CreateGame";
 import SelectGame from "./SelectGame";
 import About from "./About";
 import NavBar from "./NavBar";
-import CustomModal from "./CustomModal";
-
 import UserDetails from "./UserDetails";
+import FlashMessage from "./FlashMessage";
+import RoomsTable from "./RoomsTable";
+import PlayersTable from "./PlayersTable";
+import ChatBox from "./ChatBox";
 
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import {
-	faLock,
-	faLockOpen,
-	faXmark,
-	faCheck,
-} from "@fortawesome/free-solid-svg-icons";
-import gsap from "gsap";
+import { io } from "socket.io-client";
 
-const MainPage = () => {
-	const [userData, setUserData] = useState({
-		username: "chalnicol_0930",
-		id: "1001306",
-		pic: null,
-	});
-
-	const [username, setUsername] = useState("chalnicol_0930");
-
-	const [panelSelected, setPanelSelected] = useState("main");
+const MainPage = ({ playerName }) => {
+	const [content, setContent] = useState("welcome");
 	const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-	const [showModal, setShowModal] = useState(false);
+	const [socket, setSocket] = useState(null);
+	const [createRoomErrors, setCreateRoomErrors] = useState(null);
+	const [createRoomSuccess, setCreateRoomSuccess] = useState(false);
+	const [status, setStatus] = useState(null);
+	const [playersData, setPlayersData] = useState([]);
+	const [roomsData, setRoomsData] = useState([]);
+	const [userData, setUserData] = useState(null);
+	// const [chats, setChats] = useState([
+	// 	{
+	// 		playerId: "player1_id", // Unique ID for the player
+	// 		playerName: "Player 1", // Player's display name
+	// 		messages: [
+	// 			{
+	// 				senderId: "Player 1",
+	// 				message: "Hi!",
+	// 				timestamp: 1673820000000,
+	// 			},
+	// 			{ senderId: "You", message: "Hi!", timestamp: 1673820050000 },
+	// 			{
+	// 				senderId: "Player 1",
+	// 				message: "Can we play?",
+	// 				timestamp: 1673820100000,
+	// 			},
+	// 			{
+	// 				senderId: "You",
+	// 				message:
+	// 					"Lorem ipsum dolor sit amet consectetur adipisicing elit. Sapiente at eos quidem optio necessitatibus modi dolorum rem repellat. Quam quasi iure commodi voluptates a sapiente. Sed nihil magnam dolore libero!",
+	// 				timestamp: 1673820050000,
+	// 			},
+	// 			{
+	// 				senderId: "Player 1",
+	// 				message:
+	// 					"Lorem ipsum dolor sit amet consectetur adipisicing elit. Sapiente at eos quidem optio necessitatibus modi dolorum rem repellat. Quam quasi iure commodi voluptates a sapiente. Sed nihil magnam dolore libero!",
+	// 				timestamp: 1673820050000,
+	// 			},
+	// 			{
+	// 				senderId: "You",
+	// 				message:
+	// 					"Lorem ipsum dolor sit amet consectetur adipisicing elit. Sapiente at eos quidem optio necessitatibus modi dolorum rem repellat. Quam quasi iure commodi voluptates a sapiente. Sed nihil magnam dolore libero!",
+	// 				timestamp: 1673820050000,
+	// 			},
+	// 			{
+	// 				senderId: "Player 1",
+	// 				message:
+	// 					"Lorem ipsum dolor sit amet consectetur adipisicing elit. Sapiente at eos quidem optio necessitatibus modi dolorum rem repellat. Quam quasi iure commodi voluptates a sapiente. Sed nihil magnam dolore libero!",
+	// 				timestamp: 1673820050000,
+	// 			},
+	// 		],
+	// 	},
+	// 	{
+	// 		playerId: "player3_id",
+	// 		playerName: "Player 3",
+	// 		messages: [
+	// 			{
+	// 				senderId: "Player",
+	// 				message: "Hi!",
+	// 				timestamp: 1673820500000,
+	// 			},
+	// 			{ senderId: "You", message: "Hi!", timestamp: 1673820600000 },
+	// 			{
+	// 				senderId: "Player",
+	// 				message: "How are you?",
+	// 				timestamp: 1673820700000,
+	// 			},
+	// 		],
+	// 	},
+	// ]);
+	const [chats, setChats] = useState([]);
+	const [messages, setMessages] = useState([]);
+	const [chatIndex, setChatIndex] = useState(0);
 
 	const sidebarRef = useRef(null);
+	const chatsRef = useRef(null);
+	const chatIndexRef = useRef(null);
+
 	useEffect(() => {
+		const socketInstance = io("http://localhost:3000");
+		setSocket(socketInstance);
+
+		socketInstance.emit("join", playerName);
+
+		socketInstance.on("playerData", (player) => {
+			console.log("player", player);
+			setUserData(player);
+		});
+
+		socketInstance.on("sendStatus", (data) => {
+			// console.log("status", data);
+			setStatus(data);
+			setTimeout(() => setStatus(null), 2000);
+		});
+
+		socketInstance.on("createRoomSuccess", (data) => {
+			setCreateRoomSuccess(true);
+			setTimeout(() => setCreateRoomSuccess(false), 10); //
+			setCreateRoomErrors(null);
+			setStatus(data);
+			setTimeout(() => setStatus(null), 2000);
+		});
+
+		socketInstance.on("createRoomError", (error) => {
+			setCreateRoomSuccess(false);
+			setCreateRoomErrors(error);
+		});
+
+		socketInstance.on("updatePlayers", (players) => {
+			// console.log("all players", players);
+			setPlayersData(players);
+		});
+
+		socketInstance.on("updateRooms", (rooms) => {
+			setRoomsData(rooms);
+		});
+
+		socketInstance.on("updateGameData", (data) => {
+			// console.log("game data updated", data);
+			setRoomsData(data.rooms);
+			setPlayersData(data.players);
+		});
+
+		socketInstance.on("receivedMessage", (data) => {
+			console.log("receivedMessage", data);
+			processReceiveMessage(data);
+		});
+		socketInstance.on("updateMessage", (data) => {
+			// console.log("updateMessage", data);
+			updateSentMessage(data);
+		});
+
 		const handleResize = () => {
 			// Hide sidebar if resizing to smaller screens
 			if (window.innerWidth >= 1024) {
@@ -40,130 +152,195 @@ const MainPage = () => {
 		window.addEventListener("resize", handleResize);
 
 		// Cleanup event listener
-		return () => window.removeEventListener("resize", handleResize);
+		return () => {
+			window.removeEventListener("resize", handleResize);
+			socketInstance.off("playerData");
+			socketInstance.off("sendStatus");
+			socketInstance.off("createRoomSuccess");
+			socketInstance.off("createRoomError");
+			socketInstance.off("updatePlayers");
+			socketInstance.off("updateRooms");
+			socketInstance.off("updateGameData");
+			socketInstance.disconnect();
+		};
 	}, []);
 
+	useEffect(() => {
+		chatsRef.current = chats;
+	}, [chats]);
+
+	useEffect(() => {
+		chatIndexRef.current = chatIndex;
+	}, [chatIndex]);
+
 	const menuItems = [
-		{ id: 1, name: "main", label: "Welcome Page" },
-		{ id: 2, name: "allGames", label: "View All Games" },
-		{ id: 3, name: "playersOnline", label: "View Online Players" },
+		{ id: 1, name: "welcome", label: "Welcome Page" },
+		{ id: 2, name: "rooms", label: "View Rooms" },
+		{ id: 3, name: "players", label: "View Online Players" },
+		{ id: 4, name: "chats", label: "Chats" },
 		{ id: 5, name: "about", label: "About" },
 	];
 
-	const games = [
-		{
-			id: 1,
-			createdBy: "user001",
-			type: "classic",
-			status: "open",
-			withPassword: false,
-		},
-		{
-			id: 2,
-			createdBy: "user002",
-			type: "blitz",
-			status: "closed",
-			withPassword: true,
-		},
-		{
-			id: 3,
-			createdBy: "user003",
-			type: "classic",
-			status: "open",
-			withPassword: false,
-		},
-		{
-			id: 4,
-			createdBy: "user004",
-			type: "classic",
-			status: "open",
-			withPassword: false,
-		},
-		{
-			id: 5,
-			createdBy: "user005",
-			type: "custom",
-			status: "closed",
-			withPassword: true,
-		},
-		{
-			id: 6,
-			createdBy: "user006",
-			type: "blitz",
-			status: "closed",
-			withPassword: false,
-		},
-	];
+	const updateSentMessage = (data) => {
+		const { target, message } = data;
+		const currentChats = chatsRef.current;
 
-	const onlinePlayers = [
-		{
-			id: 1,
-			credits: "1200",
-			name: "user001",
-			status: "idle",
-		},
-		{
-			id: 2,
-			credits: "1200",
-			name: "user002",
-			status: "playing",
-		},
-		{
-			id: 3,
-			credits: "1200",
-			name: "user003",
-			status: "idle",
-		},
-		{
-			id: 4,
-			credits: "1200",
-			name: "user004",
-			status: "playing",
-		},
-		{
-			id: 5,
-			credits: "1200",
-			name: "user005",
-			status: "playing",
-		},
-	];
+		// Find the index of the chat to update
+		const existingIndex = currentChats.findIndex(
+			(chat) => chat.id === target.socketId
+		);
 
-	const gameCreated = (data) => {
-		console.log(data);
+		if (existingIndex !== -1) {
+			// Create a shallow copy of currentChats
+			const updatedChats = [...currentChats];
+
+			// Update the specific chat's messages directly
+			updatedChats[existingIndex] = {
+				...updatedChats[existingIndex],
+				messages: [
+					...(updatedChats[existingIndex].messages || []),
+					message,
+				],
+			};
+
+			// Update the messages state for the updated chat
+			setMessages(updatedChats[existingIndex].messages);
+
+			// Update the chats state
+			setChats(updatedChats);
+		} else {
+			console.log("No chat found with the given socketId");
+		}
+	};
+
+	const processReceiveMessage = (data) => {
+		const { sender, message } = data;
+
+		const currentChats = chatsRef.current;
+
+		const existingIndex = currentChats.findIndex(
+			(chat) => chat.id === sender.socketId
+		);
+
+		if (existingIndex === -1) {
+			const newChat = {
+				id: sender.socketId,
+				user: sender.username,
+				messages: [message],
+			};
+			currentChats.push(newChat);
+			setChats(currentChats);
+
+			if (chatIndexRef.current === 0) {
+				setMessages([message]);
+			}
+		} else {
+			const updatedChats = [...currentChats];
+
+			// Update the specific chat's messages directly
+			updatedChats[existingIndex] = {
+				...updatedChats[existingIndex],
+				messages: [
+					...(updatedChats[existingIndex].messages || []),
+					message,
+				],
+			};
+
+			// Update the messages state for the updated chat
+			if (existingIndex === chatIndexRef.current) {
+				setMessages(updatedChats[existingIndex].messages);
+			}
+
+			setChats(updatedChats);
+		}
+		// setChatIndex(sender.socketId);
+	};
+
+	const handleGameCreated = (data) => {
+		// console.log("game room created..");
+		socket.emit("createRoom", data);
 	};
 
 	const gameSelected = (data) => {
 		console.log(data);
 	};
 
-	const burgerClicked = () => {
-		console.log("burger clicked");
+	const handleMenuClick = () => {
+		// console.log("menu icon clicked");
 		setIsSidebarOpen((currValue) => !currValue);
 	};
 
 	const handleMenuItemClick = (name) => {
-		setPanelSelected(name);
+		setContent(name);
 		setIsSidebarOpen(false);
-	};
-
-	const handleUserEditClick = () => {
-		setShowModal(true);
+		setCreateRoomErrors(null);
 	};
 
 	const handleCloseModal = () => {
 		setShowModal(false);
 	};
 
-	const handleFormSubmit = (e) => {
-		e.preventDefault();
-		setUserData({ ...userData, username: username });
-		setShowModal(false);
+	const handleRoomsTableActionClick = (data) => {
+		// console.log("action clicks", data);
+		socket.emit(data.action, data.id);
+	};
+
+	const handleRemoveChat = (id) => {
+		const index = chats.findIndex((chat) => chat.id === id); // Find the current element index
+		if (index > 0) {
+			setChatIndex[index - 1];
+		}
+		//remove
+		setChats((prevChats) => prevChats.filter((chat) => chat.id !== id));
+	};
+
+	const handleAddPlayerToChat = (data) => {
+		console.log("adding player to chat..");
+		const { socketId, username } = data;
+
+		//check if chat exist using socketid
+		const existingChat = chats.find((chat) => chat.id === socketId) || null;
+
+		// console.log(socketId, existingChat);
+		if (!existingChat) {
+			const newChat = {
+				id: socketId,
+				user: username,
+				messages: [],
+			};
+			setChats((prevChats) => [...prevChats, newChat]);
+			setChatIndex(chats.length);
+			setMessages([]);
+
+			console.log("new chat created for player..");
+		} else {
+			//todo..
+			const existingChatIndex = chats.indexOf(existingChat);
+			setChatIndex(existingChatIndex);
+		}
+		setContent("chats");
+	};
+
+	const handleChangeChatIndex = (id) => {
+		const newIndex = chats.findIndex((chat) => chat.id === id);
+		setChatIndex(newIndex);
+
+		// Update messages state for the new chat
+		const newMessages = chats[newIndex].messages;
+		setMessages(newMessages);
+	};
+
+	const handleSendMessage = (message) => {
+		socket.emit("privateMessage", {
+			message: message,
+			targetSocket: chats[chatIndex].id,
+		});
 	};
 
 	return (
 		<>
 			<div className="fixed top-0 left-0 h-screen w-screen overflow-hidden relative">
-				<NavBar onBurgerClick={burgerClicked} />
+				<NavBar onMenuClick={handleMenuClick} />
 				<div className="h-[calc(100vh-3rem)] lg:flex relative">
 					{/* sidebar */}
 					<div
@@ -174,7 +351,7 @@ const MainPage = () => {
 						}`}
 					>
 						{/* user details */}
-						<UserDetails details={userData} onUserEditClick={handleUserEditClick} />
+						<UserDetails details={userData} />
 
 						{/* menu */}
 						<div>
@@ -185,7 +362,7 @@ const MainPage = () => {
 									<div
 										key={item.id}
 										className={`text-sm p-2  ${
-											panelSelected == item.name
+											content == item.name
 												? "bg-gray-700 text-white"
 												: "cursor-pointer hover:bg-gray-400 hover:text-white"
 										} `}
@@ -198,142 +375,75 @@ const MainPage = () => {
 						</div>
 					</div>
 
-					{/* main */}
+					{/* content */}
 					<div className="flex-1 h-full overflow-auto bg-white">
-						{panelSelected === "main" && (
+						{/* welcome page */}
+						{content === "welcome" && (
 							<div className="w-[95%] max-w-4xl  mx-auto">
+								<FlashMessage status={status} />
+
+								<CreateGame
+									reset={createRoomSuccess}
+									errors={createRoomErrors}
+									onCreateGame={handleGameCreated}
+								/>
 								<SelectGame onSelectGame={gameSelected} />
-
-								<CreateGame onCreateGame={gameCreated} />
 							</div>
 						)}
-						{panelSelected === "allGames" && (
-							<div className="w-11/12 max-w-4xl bg-white shadow-lg p-4 mt-6 rounded mx-auto border border-gray-300">
-								<h1 className="font-semibold text-lg">View Games</h1>
+
+						{/* game rooms page */}
+						{content === "rooms" && (
+							<div className="w-11/12 max-w-4xl bg-white shadow-lg p-4 mt-6 rounded mx-auto border border-gray-400">
+								<h1 className="font-semibold text-lg">Rooms</h1>
 								<div className="mt-2 overflow-x-auto">
-									<table className="w-full whitespace-nowrap min-w-[620px]">
-										<thead className="bg-gray-700 text-white font-semibold text-sm">
-											<tr>
-												<th className="text-left p-2">Game ID</th>
-												<th className="text-left p-2">Created By</th>
-												<th className="text-left p-2">Type</th>
-												<th className="text-left p-2">Status</th>
-
-												<th className="text-left p-2">With Password</th>
-
-												<th className="text-left p-2">Actions</th>
-											</tr>
-										</thead>
-										<tbody>
-											{games.map((game) => (
-												<tr key={game.id} className="odd:bg-gray-200 text-sm">
-													<td className="p-2">{game.id}</td>
-													<td className="p-2 text-gray-600 font-medium">{game.createdBy}</td>
-													<td className="p-2">
-														<span className="text-sm">{game.type}</span>
-													</td>
-													<td className="p-2 text-base">
-														{game.status === "open" ? (
-															<FontAwesomeIcon icon={faLock} className="text-gray-600" />
-														) : (
-															<FontAwesomeIcon icon={faLockOpen} className="text-green-600" />
-														)}
-														{/* <span className="text-xs">{game.status}</span> */}
-													</td>
-
-													<td className="p-2 text-base">
-														{game.withPassword ? (
-															<FontAwesomeIcon icon={faCheck} className="text-green-600" />
-														) : (
-															<FontAwesomeIcon icon={faXmark} className="text-red-600" />
-														)}
-														{/* <span className="text-xs">{game.withPassword ? "yes" : "no"}</span> */}
-													</td>
-													<td className="p-2">
-														{game.status === "open" ? (
-															<button className="text-xs py-0.5 font-medium text-white bg-blue-500 hover:bg-blue-400 w-full rounded">
-																Join
-															</button>
-														) : (
-															<button className="text-xs py-0.5 font-medium text-white bg-orange-500 hover:bg-orange-400 w-full rounded">
-																Spectate
-															</button>
-														)}
-													</td>
-												</tr>
-											))}
-										</tbody>
-									</table>
+									{roomsData.length > 0 ? (
+										<RoomsTable
+											rooms={roomsData}
+											userId={userData.id}
+											onActionClick={handleRoomsTableActionClick}
+										/>
+									) : (
+										<div className="text-gray-600 font-medium px-3 py-2 text-white bg-gray-700">
+											No rooms found.
+										</div>
+									)}
 								</div>
 							</div>
 						)}
-						{panelSelected === "playersOnline" && (
-							<div className="w-11/12 max-w-4xl bg-white shadow-lg p-4 rounded mt-6 mx-auto border border-gray-300">
-								<h1 className="font-semibold text-lg">Online Players</h1>
-								<div className="mt-2 overflow-x-auto">
-									<table className="w-full whitespace-nowrap min-w-[620px]">
-										<thead className="bg-gray-700 text-white font-semibold text-sm">
-											<tr>
-												<th className="text-left p-2">User ID</th>
-												<th className="text-left p-2">Credits</th>
-												<th className="text-left p-2">UserName</th>
-												<th className="text-left p-2">Status</th>
-												<th className="text-left p-2">Actions</th>
-											</tr>
-										</thead>
-										<tbody>
-											{onlinePlayers.map((user) => (
-												<tr key={user.id} className="odd:bg-gray-200 text-sm">
-													<td className="p-2">00000{user.id}</td>
-													<td className="p-2">{user.credits}</td>
-													<td className="p-2">{user.name}</td>
-													<td className="p-2">
-														{user.status == "playing" ? (
-															<p className="bg-green-600 rounded-full w-20 text-white text-center text-[0.65rem] font-medium">
-																PLAYING
-															</p>
-														) : (
-															<p className="bg-gray-400 rounded-full w-20 text-white text-center text-[0.65rem] font-medium">
-																IDLE
-															</p>
-														)}
-													</td>
-													<td className="p-2">
-														<button className="text-xs py-0.5 w-20 text-white font-semibold bg-orange-500 hover:bg-orange-600 w-full rounded">
-															Chat
-														</button>
-													</td>
-												</tr>
-											))}
-										</tbody>
-									</table>
-								</div>
-							</div>
+
+						{/* players page */}
+						{content === "players" && (
+							<PlayersTable
+								players={playersData}
+								userId={userData.id}
+								onAddChatClick={handleAddPlayerToChat}
+							/>
 						)}
-						{panelSelected === "about" && <About />}
+
+						{/* chat page page */}
+						{content === "chats" && (
+							<ChatBox
+								userSocketId={userData.socketId}
+								chats={chats}
+								messages={messages}
+								chatIndex={chatIndex}
+								onRemoveChat={handleRemoveChat}
+								onChangeIndex={handleChangeChatIndex}
+								onSendMessage={handleSendMessage}
+							/>
+						)}
+						{/* about page */}
+						{content === "about" && <About />}
 					</div>
 				</div>
 
-				{showModal && (
-					<CustomModal size="xs" onCloseModal={handleCloseModal}>
-						<p className="text-xs font-medium text-gray-600">Edit Username</p>
-						<form onSubmit={handleFormSubmit}>
-							<div className="flex gap-x-2 mt-1">
-								<input
-									type="text"
-									className="px-3 py-2 border border-gray-500 rounded flex-1 focus:outline-none focus:ring-1 focus:ring-blue-500"
-									placeholder="enter username"
-									value={username}
-									name="username"
-									onChange={(e) => setUsername(e.target.value)}
-								/>
-								<button className="bg-blue-500 py-2 hover:bg-blue-600 text-white w-24 font-semibold rounded">
-									Submit
-								</button>
-							</div>
-						</form>
-					</CustomModal>
-				)}
+				{/* {showModal && (
+					<EditNameModal
+						onSubmit={handleEditNameModalSubmit}
+						onClose={handleCloseModal}
+						name={username}
+					/>
+				)} */}
 			</div>
 		</>
 	);

@@ -17,7 +17,9 @@ const SelectGame = ({ onSelectGame }) => {
 
 			<div className="flex flex-col lg:flex-row gap-x-5 gap-y-2 mt-3">
 				<div className="flex-1">
-					<span className="text-sm text-gray-600 font-medium">Select Type</span>
+					<span className="text-sm text-gray-600 font-medium">
+						Select Type
+					</span>
 					<div className="flex text-lg font-medium mt-1 border border-gray-400 rounded">
 						<button
 							className={`flex-1 p-1 rounded-l ${
@@ -44,7 +46,9 @@ const SelectGame = ({ onSelectGame }) => {
 					</div>
 				</div>
 				<div className="flex-1">
-					<span className="text-sm text-gray-600 font-medium">Select Opponent</span>
+					<span className="text-sm text-gray-600 font-medium">
+						Select Opponent
+					</span>
 					<div className="flex text-lg font-medium mt-1 border border-gray-400 rounded">
 						<button
 							className={`flex-1 p-1 rounded-l ${
@@ -66,7 +70,7 @@ const SelectGame = ({ onSelectGame }) => {
 							onClick={(e) => setGameOpponent("online")}
 							disabled={gameOpponent == "online"}
 						>
-							Random Player
+							Online Player
 						</button>
 					</div>
 				</div>
