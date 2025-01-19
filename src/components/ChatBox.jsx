@@ -3,7 +3,7 @@ import React, { useEffect, useState } from "react";
 const ChatBox = ({
 	userSocketId,
 	chats,
-	messages,
+
 	chatIndex,
 	onChangeIndex,
 	onRemoveChat,
@@ -11,15 +11,24 @@ const ChatBox = ({
 }) => {
 	const [message, setMessage] = useState("");
 
-	// const [displayedMessages, setDisplayedMessages] = useState([]);
+	const [displayedMessages, setDisplayedMessages] = useState([]);
 
-	// useEffect(() => {
-	// 	if (chats.length > 0) {
-	// 		// console.log(chats, chatIndex);
-	// 		setDisplayedMessages(chats[chatIndex].messages);
-	// 		setNewChatIndex(chatIndex);
-	// 	}
-	// }, [chats, chatIndex]);
+	useEffect(() => {
+		// console.log(chatIndex, chats.length);
+		if (chatIndex !== null && chats.length > 0 && chatIndex < chats.length) {
+			setDisplayedMessages(chats[chatIndex].messages);
+		}
+	}, [chats, chatIndex]);
+
+	const getUnreadCount = (id) => {
+		const index = chats.findIndex((chat) => chat.id === id);
+		if (index !== -1) {
+			// Count unread messages in the specific chat
+			return chats[index].messages.filter((message) => !message.isRead)
+				.length;
+		}
+		return 0; // Return 0 if the chat with the given id is not found
+	};
 
 	const handleSendMessage = (e) => {
 		e.preventDefault();
@@ -42,20 +51,28 @@ const ChatBox = ({
 							{chats.map((chat, index) => (
 								<div
 									key={chat.id}
-									className={`${
+									className={`flex items-center px-2 py-1 min-w-40  border-r border-white font-medium text-sm ${
 										index === chatIndex
 											? "bg-gray-700"
 											: "bg-gray-400 text-gray-500 cursor-pointer hover:bg-gray-500 hover:text-gray-200"
-									} flex items-center p-2 min-w-40  border-r border-white font-medium text-sm`}
+									}`}
 								>
+									{getUnreadCount(chat.id) > 0 && (
+										<div className="me-1 leading-normal">
+											<p className="bg-white text-center h-4 w-5 rounded-full text-[0.7rem] leading-[1rem] font-bold text-gray-900">
+												{getUnreadCount(chat.id)}
+											</p>
+										</div>
+									)}
 									<div
-										className="flex-1 font-medium"
+										className="font-medium"
 										onClick={() => onChangeIndex(chat.id)}
 									>
 										{chat.user}
 									</div>
+
 									<button
-										className="font-bold hover:text-red-500 w-4 h-4 rounded-full text-white leading-[0.6rem] text-lg"
+										className="ms-auto font-bold hover:text-red-500 px-1 rounded-full text-white text-lg"
 										onClick={() => onRemoveChat(chat.id)}
 									>
 										&times;
@@ -65,15 +82,15 @@ const ChatBox = ({
 						</div>
 
 						<div className="w-full bg-green-100">
-							<div className="h-[430px] overflow-auto p-3  space-y-2 ">
-								{messages.length > 0 ? (
-									messages.map((msg, index) => (
+							<div className="h-[430px] overflow-auto">
+								{displayedMessages.length > 0 ? (
+									displayedMessages.map((msg, index) => (
 										<div
 											key={index}
-											className={`flex flex-col gap-y-0.5 text-sm text-gray-700 items-start border-b border-gray-400 pb-2`}
+											className={`flex flex-col text-sm text-gray-700 items-start border-b border-green-300 even:bg-green-200 py-1.5 px-2`}
 										>
 											<div
-												className={`font-bold text-xs min-w-20 rounded ${
+												className={`font-bold text-xs min-w-28 rounded ${
 													msg.sender.socketId === userSocketId
 														? "text-blue-500"
 														: "text-red-500"
@@ -90,7 +107,7 @@ const ChatBox = ({
 										</div>
 									))
 								) : (
-									<div className="text-gray-600 text-sm font-medium py-2">
+									<div className="text-gray-600 text-sm font-medium px-3 py-4">
 										Start a conversation to connect and share your
 										thoughts!
 									</div>

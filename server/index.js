@@ -209,7 +209,7 @@ io.on("connection", (socket) => {
 				sender: senderData,
 				message: message,
 				timestamp: new Date().toISOString(),
-				isRead: false,
+				// isRead: false,
 			};
 
 			//update chats..

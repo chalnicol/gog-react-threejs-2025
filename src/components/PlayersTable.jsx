@@ -27,7 +27,7 @@ const PlayersTable = ({ players, userId, onAddChatClick }) => {
 							>
 								<td className="p-2">{player.id}</td>
 
-								<td className="p-2 font-medium text-gray-600">
+								<td className="p-2 font-semibold text-gray-600">
 									{player.username}
 								</td>
 								{/* <td className="p-2">{player.credits}</td> */}
