@@ -15,13 +15,24 @@ class Room {
 		this.players = [];
 		this.players.push(creatorData);
 
-		if (playerInvitedId !== "") {
-			this.sendInvite(playerInvitedId);
+		this.playerInvitedId = playerInvitedId; // Unique
+		this.status = playerInvitedId !== "" ? "pending" : "open";
+		this.timer = null;
+	}
+
+	inviteSent() {
+		clearTimeout(this.timer);
+		this.timer = setTimeout(() => this.inviteResponse(0), 5000);
+	}
+
+	inviteResponse(response) {
+		if (response === 0) {
+			this.status = "open";
 		}
 	}
 
-	sendInvite(playerId) {
-		console.log("Invite sent to ", playerId);
+	setStatus(status) {
+		this.status = status;
 	}
 	addPlayer(playerId) {
 		if (this.players.length < 2) {

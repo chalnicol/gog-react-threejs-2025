@@ -3,7 +3,12 @@ import React from "react";
 const PlayersTable = ({ players, userId, onAddChatClick }) => {
 	return (
 		<div className="w-11/12 max-w-4xl bg-white shadow-lg p-4 rounded mt-6 mx-auto border border-gray-300">
-			<h1 className="font-semibold text-lg">Online Players</h1>
+			<div className="flex items-center">
+				<h1 className="font-semibold text-lg ">Online Players</h1>
+				<button className="ms-auto text-xs px-3 py-0.5 bg-sky-700 hover:bg-sky-600 rounded font-semibold text-white">
+					Refresh
+				</button>
+			</div>
 			<div className="mt-2 overflow-x-auto">
 				<table className="w-full whitespace-nowrap min-w-[620px]">
 					<thead className="bg-gray-700 text-white font-semibold text-sm">
@@ -28,19 +33,26 @@ const PlayersTable = ({ players, userId, onAddChatClick }) => {
 								<td className="p-2">{player.id}</td>
 
 								<td className="p-2 font-semibold text-gray-600">
-									{player.username}
+									{player.username}{" "}
+									{player.id === userId && <span>(self)</span>}
 								</td>
 								{/* <td className="p-2">{player.credits}</td> */}
 								<td className="p-2">--</td>
 
 								<td className="p-2">
-									{player.status == "playing" ? (
-										<p className="bg-green-600 rounded-full w-20 text-white text-center text-[0.65rem] font-medium">
+									{player.status == "playing" && (
+										<p className="bg-green-600 rounded-full w-20 text-white text-center text-[0.65rem] font-bold">
 											PLAYING
 										</p>
-									) : (
-										<p className="bg-gray-400 rounded-full w-20 text-white text-center text-[0.65rem] font-medium">
+									)}
+									{player.status == "idle" && (
+										<p className="bg-gray-400 rounded-full w-20 text-white text-center text-[0.65rem] font-bold">
 											IDLE
+										</p>
+									)}
+									{player.status == "waiting" && (
+										<p className="bg-purple-500 font-bold rounded-full w-20 text-white text-center text-[0.65rem]">
+											WAITING
 										</p>
 									)}
 								</td>

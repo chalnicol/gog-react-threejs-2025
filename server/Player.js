@@ -12,6 +12,10 @@ class Player {
 	// setUsername(username) {
 	// 	this.username = username;
 	// }
+	setRoom(roomId) {
+		this.roomId = roomId; //
+		this.status = "waiting";
+	}
 	joinRoom(roomId) {
 		this.roomId = roomId;
 	}

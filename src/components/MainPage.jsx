@@ -8,9 +8,10 @@ import FlashMessage from "./FlashMessage";
 import RoomsTable from "./RoomsTable";
 import PlayersTable from "./PlayersTable";
 import ChatBox from "./ChatBox";
+import PasswordModal from "./PasswordModal";
+import InviteModal from "./InviteModal";
 
 import { io } from "socket.io-client";
-import { space } from "postcss/lib/list";
 
 const MainPage = ({ playerName }) => {
 	const [content, setContent] = useState("welcome");
@@ -25,6 +26,10 @@ const MainPage = ({ playerName }) => {
 	const [chats, setChats] = useState([]);
 	const [unreadMessagesCount, setUnreadMessagesCount] = useState(0);
 	const [chatIndex, setChatIndex] = useState(null);
+	const [showPasswordModal, setShowPasswordModal] = useState(false);
+	const [showInviteModal, setShowInviteModal] = useState(false);
+	const [inviteData, setInviteData] = useState(null);
+	const [toJoinRoom, setToJoinRoom] = useState("");
 
 	const chatIndexRef = useRef(null);
 	const sidebarRef = useRef(null);
@@ -77,9 +82,15 @@ const MainPage = ({ playerName }) => {
 		socketInstance.on("receivedMessage", (data) => {
 			processReceiveMessage(data);
 		});
+
 		socketInstance.on("updateMessage", (data) => {
 			// console.log("updateMessage", data);
 			updateSentMessage(data);
+		});
+
+		socketInstance.on("inviteToRoom", (data) => {
+			setInviteData(data);
+			setShowInviteModal(true);
 		});
 
 		const handleResize = () => {
@@ -147,7 +158,7 @@ const MainPage = ({ playerName }) => {
 
 	const menuItems = [
 		{ id: 1, name: "welcome", label: "Welcome Page" },
-		{ id: 2, name: "rooms", label: "View Rooms" },
+		{ id: 2, name: "rooms", label: "View Games" },
 		{ id: 3, name: "players", label: "View Online Players" },
 		{ id: 4, name: "chats", label: "Chats" },
 		{ id: 5, name: "about", label: "About" },
@@ -255,13 +266,24 @@ const MainPage = ({ playerName }) => {
 		setCreateRoomErrors(null);
 	};
 
-	const handleCloseModal = () => {
-		setShowModal(false);
-	};
-
 	const handleRoomsTableActionClick = (data) => {
 		// console.log("action clicks", data);
-		socket.emit(data.action, data.id);
+		if (data.action === "joinRoom") {
+			if (data.withPassword) {
+				setToJoinRoom(data.id);
+				setShowPasswordModal(true);
+			} else {
+				socket.emit("joinRoom", { id: data.id, password: "" });
+			}
+		} else {
+			socket.emit(data.action, data.id);
+		}
+	};
+
+	const handlePasswordSubmit = (password) => {
+		// console.log("password submitted, joining room");
+		setShowPasswordModal(false);
+		socket.emit("joinRoom", { id: toJoinRoom, password: password });
 	};
 
 	const handleRemoveChat = (id) => {
@@ -325,6 +347,11 @@ const MainPage = ({ playerName }) => {
 		});
 	};
 
+	const handleInviteResponse = (response) => {
+		console.log("invite response received", response);
+		setShowInviteModal(false);
+	};
+
 	return (
 		<>
 			<div className="fixed top-0 left-0 h-screen w-screen overflow-hidden relative">
@@ -378,36 +405,50 @@ const MainPage = ({ playerName }) => {
 					<div className="flex-1 h-full overflow-auto bg-white">
 						{/* welcome page */}
 						{content === "welcome" && (
-							<div className="w-[95%] max-w-4xl  mx-auto">
-								<FlashMessage status={status} />
-
-								<CreateGame
-									reset={createRoomSuccess}
-									errors={createRoomErrors}
-									onCreateGame={handleGameCreated}
-								/>
+							<div className="w-[95%] max-w-3xl  mx-auto">
+								<h1 className="text-lg font-bold border-y border-gray-300 text-gray-400 px-3 py-2 bg-gray-50 mt-8 text-center">
+									Welcome to Game of the Generals (Salpakan)
+								</h1>
 								<SelectGame onSelectGame={gameSelected} />
 							</div>
 						)}
 
 						{/* game rooms page */}
 						{content === "rooms" && (
-							<div className="w-11/12 max-w-4xl bg-white shadow-lg p-4 mt-6 rounded mx-auto border border-gray-400">
-								<h1 className="font-semibold text-lg">Rooms</h1>
-								<div className="mt-2 overflow-x-auto">
-									{roomsData.length > 0 ? (
-										<RoomsTable
-											rooms={roomsData}
-											userId={userData.id}
-											onActionClick={handleRoomsTableActionClick}
-										/>
-									) : (
-										<div className="text-gray-600 font-medium px-3 py-2 text-white bg-gray-700">
-											No rooms found.
-										</div>
-									)}
+							<>
+								<div className="w-11/12 max-w-4xl  mx-auto">
+									<FlashMessage status={status} />
+
+									<CreateGame
+										reset={createRoomSuccess}
+										errors={createRoomErrors}
+										onCreateGame={handleGameCreated}
+									/>
 								</div>
-							</div>
+
+								<div className="w-11/12 max-w-4xl bg-white shadow-lg p-4 mt-6 rounded mx-auto border border-gray-400">
+									<div className="flex items-center">
+										<h1 className="font-semibold text-lg ">Games</h1>
+										<button className="ms-auto text-xs px-3 py-0.5 bg-sky-700 hover:bg-sky-600 rounded font-semibold text-white">
+											Refresh
+										</button>
+									</div>
+
+									<div className="mt-2 overflow-x-auto">
+										{roomsData.length > 0 ? (
+											<RoomsTable
+												rooms={roomsData}
+												userId={userData.id}
+												onActionClick={handleRoomsTableActionClick}
+											/>
+										) : (
+											<div className="text-gray-600 font-medium px-3 py-2 text-white bg-gray-700">
+												No games to display.
+											</div>
+										)}
+									</div>
+								</div>
+							</>
 						)}
 
 						{/* players page */}
@@ -430,18 +471,25 @@ const MainPage = ({ playerName }) => {
 								onSendMessage={handleSendMessage}
 							/>
 						)}
+
 						{/* about page */}
 						{content === "about" && <About />}
 					</div>
 				</div>
 
-				{/* {showModal && (
-					<EditNameModal
-						onSubmit={handleEditNameModalSubmit}
-						onClose={handleCloseModal}
-						name={username}
+				{showPasswordModal && (
+					<PasswordModal
+						onSubmit={handlePasswordSubmit}
+						onClose={() => setShowPasswordModal(false)}
 					/>
-				)} */}
+				)}
+				{showInviteModal && (
+					<InviteModal
+						inviteData={inviteData}
+						onSubmit={handleInviteResponse}
+						onClose={() => setShowInviteModal(false)}
+					/>
+				)}
 			</div>
 		</>
 	);

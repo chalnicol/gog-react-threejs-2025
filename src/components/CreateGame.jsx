@@ -36,7 +36,7 @@ const CreateGame = ({ reset, errors, onCreateGame }) => {
 
 	return (
 		<div className="border border-gray-400 bg-white rounded shadow-lg mt-6 px-3 pt-2 pb-4">
-			<h1 className="font-semibold text-lg px-1">Create Room</h1>
+			<h1 className="font-semibold text-lg px-1">Create Game</h1>
 			<hr className="border-0 border-b border-gray-400 shadow-lg my-1" />
 
 			<div className="flex flex-col lg:flex-row gap-x-3 gap-y-2 mt-3">
@@ -142,7 +142,7 @@ const CreateGame = ({ reset, errors, onCreateGame }) => {
 			</div>
 
 			<button
-				className="w-full text-white md:w-40 rounded hover:bg-blue-500 bg-blue-600 mt-4 py-2 border border"
+				className="w-full text-white md:w-40 rounded hover:bg-blue-500 bg-blue-600 mt-4 py-2 border border active:scale-95"
 				onClick={handleCreateGame}
 			>
 				Create

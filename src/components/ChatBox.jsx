@@ -87,7 +87,7 @@ const ChatBox = ({
 									displayedMessages.map((msg, index) => (
 										<div
 											key={index}
-											className={`flex flex-col text-sm text-gray-700 items-start border-b border-green-300 even:bg-green-200 py-1.5 px-2`}
+											className={`flex flex-col text-sm text-gray-700 items-start border-b border-gray-300 even:bg-teal-100 py-1.5 px-2`}
 										>
 											<div
 												className={`font-bold text-xs min-w-28 rounded ${
@@ -134,7 +134,7 @@ const ChatBox = ({
 					</>
 				) : (
 					<div className="text-gray-600 font-medium px-3 py-2 text-white bg-gray-700">
-						No chats found.
+						No chats to display.
 					</div>
 				)}
 			</div>

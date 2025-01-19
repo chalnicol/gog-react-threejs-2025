@@ -62,12 +62,12 @@ const CustomModal = ({ size = "md", children, onCloseModal }) => {
 					className={`bg-white p-3 w-[90%] rounded shadow-lg relative ${modalSizeClass}`}
 				>
 					{children}
-					<button
-						className="absolute -top-3 -right-3 bg-white hover:bg-gray-200 text-black border border-gray-600 font-bold text-xl rounded-full h-6 w-6 leading-[1rem]"
+					<div
+						className="absolute -top-3 -right-3 bg-white hover:bg-gray-200 text-black border border-gray-600 font-bold text-xl rounded-full h-6 w-6 text-center select-none cursor-pointer leading-[1.2rem]"
 						onClick={closeModal}
 					>
 						&times;
-					</button>
+					</div>
 				</div>
 			</div>
 		</div>

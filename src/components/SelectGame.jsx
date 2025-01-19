@@ -77,7 +77,7 @@ const SelectGame = ({ onSelectGame }) => {
 			</div>
 
 			<button
-				className="w-full text-white md:w-40 rounded hover:bg-blue-500 bg-blue-600 mt-4 py-2 border border"
+				className="w-full text-white md:w-40 rounded hover:bg-blue-500 bg-blue-600 mt-4 active:scale-95 py-2 border border"
 				onClick={handleSelectGame}
 			>
 				Play

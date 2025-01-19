@@ -81,6 +81,10 @@ io.on("connection", (socket) => {
 
 		const gameCreator = players[socket.id];
 
+		const invited =
+			Object.values(players).find((player) => player.id === playerInvited) ||
+			null;
+
 		//check if creator already has a room created..
 		if (gameCreator.roomId !== "") {
 			socket.emit("sendStatus", {
@@ -91,14 +95,20 @@ io.on("connection", (socket) => {
 
 		//consolidated form errors and send to client..
 		const errors = {};
-		if (playerInvited !== "" && !playerExistsById(playerInvited)) {
-			errors.playerInvited = "Player not found.";
-		}
 
 		if (playerInvited !== "" && playerInvited === gameCreator.id) {
 			errors.playerInvited = "Invalid player id.";
 		}
-
+		if (playerInvited !== "" && invited === null) {
+			errors.playerInvited = "Player not found.";
+		}
+		if (
+			playerInvited !== "" &&
+			invited !== null &&
+			invited.status === "playing"
+		) {
+			errors.playerInvited = "Player is busy.";
+		}
 		if (password !== "" && password.length < 3) {
 			errors.password = "Password must be at least 3 characters long.";
 		}
@@ -108,6 +118,8 @@ io.on("connection", (socket) => {
 			socket.emit("createRoomError", errors);
 			return;
 		}
+
+		//all good to create a new room..
 
 		const gameCreatorData = {
 			username: gameCreator.username,
@@ -123,15 +135,18 @@ io.on("connection", (socket) => {
 			allowSpectators
 		);
 		rooms[socket.id] = newRoom;
-		gameCreator.roomId = socket.id;
 
-		const sanitizedRooms = Object.values(rooms).map((room) => {
-			const { password, ...rest } = room; // Exclude password
-			return rest;
-		});
-
+		gameCreator.setRoom(socket.id);
+		//send invite if playerInvited is 	present
+		if (playerInvited !== "") {
+			io.to(invited.socketId).emit("inviteToRoom", {
+				user: gameCreator.username,
+				gameType: type,
+			});
+			console.log("invite has been sent to ", invited.username);
+		}
 		//send status success..
-		socket.emit("sendStatus", {
+		socket.emit("createRoomSuccess", {
 			success: "Room has been created successfully!",
 		});
 
@@ -158,6 +173,7 @@ io.on("connection", (socket) => {
 			room.players.some((plyr) => plyr.id === player.id)
 		) {
 			player.roomId = "";
+			player.status = "idle";
 
 			room.removePlayer(player.id);
 
@@ -175,8 +191,19 @@ io.on("connection", (socket) => {
 	});
 
 	//join room..
-	socket.on("joinRoom", (roomId) => {
-		console.log("A user joined room : ", roomId);
+	socket.on("joinRoom", (data) => {
+		const { id, password } = data;
+
+		const room = rooms[id];
+		if (room) {
+			if (room.withPassword && room.password !== password) {
+				socket.emit("sendStatus", {
+					error: "Password submitted is incorrect!",
+				});
+				return;
+			}
+			console.log("A user joined room : ", id);
+		}
 	});
 
 	//spectate room..
