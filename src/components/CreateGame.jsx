@@ -2,14 +2,16 @@ import React, { useEffect, useState } from "react";
 
 const CreateGame = ({ reset, errors, onCreateGame }) => {
 	const [gameType, setGameType] = useState("classic");
-	const [allowSpectators, setallowSpectators] = useState(true);
+	const [allowSpectators, setAllowSpectators] = useState(true);
+	const [privateGame, setPrivateGame] = useState(false);
+
 	const [password, setPassword] = useState("");
 	const [playerInvited, setPlayerInvited] = useState("");
 
 	const handleCreateGame = () => {
 		onCreateGame({
 			type: gameType,
-			password: password,
+			privateGame: privateGame,
 			playerInvited: playerInvited,
 			allowSpectators: allowSpectators,
 		});
@@ -17,8 +19,8 @@ const CreateGame = ({ reset, errors, onCreateGame }) => {
 
 	const resetForms = () => {
 		setGameType("classic");
-		setallowSpectators(true);
-		setPassword("");
+		setAllowSpectators(true);
+		setPrivateGame(false);
 		setPlayerInvited("");
 	};
 
@@ -81,7 +83,7 @@ const CreateGame = ({ reset, errors, onCreateGame }) => {
 									? "bg-green-400 shadow-inner-soft-dark text-white"
 									: "bg-gray-200 hover:bg-gray-300"
 							}`}
-							onClick={(e) => setallowSpectators(true)}
+							onClick={(e) => setAllowSpectators(true)}
 							disabled={allowSpectators}
 						>
 							Yes
@@ -92,7 +94,7 @@ const CreateGame = ({ reset, errors, onCreateGame }) => {
 									? "bg-green-400 shadow-inner-soft-dark text-white"
 									: "bg-gray-200 hover:bg-gray-300"
 							}`}
-							onClick={(e) => setallowSpectators(false)}
+							onClick={(e) => setAllowSpectators(false)}
 							disabled={!allowSpectators}
 						>
 							No
@@ -102,7 +104,7 @@ const CreateGame = ({ reset, errors, onCreateGame }) => {
 			</div>
 
 			<div className="flex flex-col lg:flex-row gap-x-3 gap-y-2 mt-3">
-				<div className="flex-1">
+				{/* <div className="flex-1">
 					<span className="text-sm text-gray-600 font-medium">
 						Set Game Password (Optional)
 					</span>
@@ -119,22 +121,59 @@ const CreateGame = ({ reset, errors, onCreateGame }) => {
 							{errors.password}
 						</span>
 					)}
+				</div> */}
+
+				<div className="flex-1">
+					<span className="text-sm text-gray-600 font-medium">
+						Set Mode
+					</span>
+					<div className="flex text-lg font-medium mt-1 border border-gray-400 rounded">
+						<button
+							className={`flex-1 p-1 rounded-l ${
+								!privateGame
+									? "bg-green-400 shadow-inner-soft-dark text-white"
+									: "bg-gray-200 hover:bg-gray-300"
+							}`}
+							onClick={(e) => setPrivateGame(false)}
+							disabled={!privateGame}
+						>
+							Free Play
+						</button>
+						<button
+							className={`flex-1 py-1 rounded-r ${
+								privateGame
+									? "bg-green-400 shadow-inner-soft-dark text-white"
+									: "bg-gray-200 hover:bg-gray-300"
+							}`}
+							onClick={(e) => setPrivateGame(true)}
+							disabled={privateGame}
+						>
+							Private Match
+						</button>
+					</div>
 				</div>
 
 				<div className="flex-1">
 					<span className="text-sm text-gray-600 font-medium">
-						Invite A Player (Optional)
+						Invite Player (Required only for Private Match)
 					</span>
 					<input
-						className="w-full px-3 mt-1 py-2 border border-gray-400 rounded focus:outline-none"
+						className={`w-full px-3 mt-1 h-[37.5px] border rounded focus:outline-none shadow-inner ${
+							privateGame ? "bg-white" : "bg-gray-100"
+						} ${
+							errors?.playerInvited
+								? "border-red-500"
+								: "border-gray-400"
+						}`}
 						type="text"
 						placeholder="enter player id"
 						value={playerInvited}
 						onChange={(e) => setPlayerInvited(e.target.value)}
 						maxLength={10}
+						disabled={!privateGame}
 					/>
 					{errors?.playerInvited && (
-						<span className="text-xs text-red-500">
+						<span className="text-xs text-red-500 font-medium">
 							{errors.playerInvited}
 						</span>
 					)}
@@ -142,10 +181,10 @@ const CreateGame = ({ reset, errors, onCreateGame }) => {
 			</div>
 
 			<button
-				className="w-full text-white md:w-40 rounded hover:bg-blue-500 bg-blue-600 mt-4 py-2 border border active:scale-95"
+				className="w-full text-white md:w-40 rounded hover:bg-blue-500 font-bold bg-blue-600 mt-4 py-2 border border active:scale-95"
 				onClick={handleCreateGame}
 			>
-				Create
+				CREATE
 			</button>
 		</div>
 	);

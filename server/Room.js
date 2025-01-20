@@ -1,51 +1,46 @@
 class Room {
 	constructor(
 		id,
-		creatorData,
+		hostData,
 		playerInvitedId,
 		type,
-		password,
+		privateMatch,
 		allowSpectators
 	) {
 		this.id = id; // Unique ID
-		this.withPassword = password !== "";
-		this.password = password; // Whether
 		this.allowSpectators = allowSpectators; // Whether spectators are allowed or not
 		this.type = type;
-		this.players = [];
-		this.players.push(creatorData);
-
+		this.privateMatch = privateMatch;
 		this.playerInvitedId = playerInvitedId; // Unique
-		this.status = playerInvitedId !== "" ? "pending" : "open";
+		this.status = "open";
 		this.timer = null;
+		this.players = [hostData];
 	}
 
-	inviteSent() {
-		clearTimeout(this.timer);
-		this.timer = setTimeout(() => this.inviteResponse(0), 5000);
-	}
-
-	inviteResponse(response) {
-		if (response === 0) {
-			this.status = "open";
-		}
-	}
-
-	setStatus(status) {
-		this.status = status;
-	}
-	addPlayer(playerId) {
+	addPlayer(playerData) {
 		if (this.players.length < 2) {
-			this.players.push(playerId);
+			this.players.push(playerData);
+
+			if (this.players.length >= 2) {
+				this.status = "closed";
+			}
 		}
 	}
 
-	removePlayer(playerId) {
-		this.players = this.players.filter((player) => player.id !== playerId);
+	setInvited(playerId) {
+		this.playerInvitedId = playerId;
 	}
-	checkPassword(password) {
-		return this.withPassword && this.password === password;
+
+	removeInvited() {
+		this.playerInvitedId = "";
 	}
+
+	removePlayer(socketId) {
+		this.players = this.players.filter(
+			(player) => player.socketId !== socketId
+		);
+	}
+
 	getPlayers() {
 		return this.players;
 	}

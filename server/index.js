@@ -58,6 +58,10 @@ const getSanitizedRooms = () => {
 	});
 };
 
+const getPlayer = (id) => {
+	return Object.values(players).find((player) => player.id === id) || null;
+};
+
 io.on("connection", (socket) => {
 	//user joined..
 	socket.on("join", (username) => {
@@ -77,18 +81,16 @@ io.on("connection", (socket) => {
 
 	//create game room
 	socket.on("createRoom", (roomData) => {
-		const { type, password, playerInvited, allowSpectators } = roomData;
+		const { type, privateGame, playerInvited, allowSpectators } = roomData;
 
-		const gameCreator = players[socket.id];
+		const host = players[socket.id];
 
-		const invited =
-			Object.values(players).find((player) => player.id === playerInvited) ||
-			null;
+		const invited = getPlayer(playerInvited);
 
 		//check if creator already has a room created..
-		if (gameCreator.roomId !== "") {
+		if (host.roomId !== "") {
 			socket.emit("sendStatus", {
-				error: "You already have a room created!",
+				error: "You are already in a room.",
 			});
 			return;
 		}
@@ -96,7 +98,10 @@ io.on("connection", (socket) => {
 		//consolidated form errors and send to client..
 		const errors = {};
 
-		if (playerInvited !== "" && playerInvited === gameCreator.id) {
+		if (privateGame && playerInvited === "") {
+			errors.playerInvited = "Player ID is required for private match.";
+		}
+		if (playerInvited !== "" && playerInvited === host.id) {
 			errors.playerInvited = "Invalid player id.";
 		}
 		if (playerInvited !== "" && invited === null) {
@@ -109,9 +114,6 @@ io.on("connection", (socket) => {
 		) {
 			errors.playerInvited = "Player is busy.";
 		}
-		if (password !== "" && password.length < 3) {
-			errors.password = "Password must be at least 3 characters long.";
-		}
 
 		if (Object.keys(errors).length > 0) {
 			// console.log("Error creating the room:", errors);
@@ -121,28 +123,67 @@ io.on("connection", (socket) => {
 
 		//all good to create a new room..
 
-		const gameCreatorData = {
-			username: gameCreator.username,
-			id: gameCreator.id,
+		const hostData = {
+			username: host.username,
+			socketId: host.socketId,
+			wins: 0,
+			loss: 0,
 		};
 
 		const newRoom = new Room(
 			socket.id,
-			gameCreatorData,
+			hostData,
 			playerInvited,
 			type,
-			password,
+			privateGame,
 			allowSpectators
 		);
+
 		rooms[socket.id] = newRoom;
 
-		gameCreator.setRoom(socket.id);
+		host.setRoom(socket.id);
 		//send invite if playerInvited is 	present
-		if (playerInvited !== "") {
-			io.to(invited.socketId).emit("inviteToRoom", {
-				user: gameCreator.username,
-				gameType: type,
+		if (playerInvited !== "" && invited !== null) {
+			const senderData = {
+				username: host.username,
+				socketId: socket.id,
+			};
+
+			const targetData = {
+				username: invited.username,
+				socketId: invited.socketId,
+			};
+
+			const targetMessageData = {
+				sender: senderData,
+				game: {
+					id: socket.id,
+					type: type,
+				},
+				type: "invite",
+				timeStamp: Date.now(),
+			};
+
+			//send to target..
+			io.to(invited.socketId).emit("receivedMessage", {
+				sender: senderData,
+				message: targetMessageData,
 			});
+
+			//send to creator..
+
+			const messageData = {
+				sender: senderData,
+				message: `(Invite Sent. Game ID: ${newRoom.id})`,
+				type: "regular",
+				timeStamp: Date.now(),
+			};
+
+			socket.emit("receivedMessage", {
+				sender: targetData,
+				message: messageData,
+			});
+
 			console.log("invite has been sent to ", invited.username);
 		}
 		//send status success..
@@ -156,7 +197,7 @@ io.on("connection", (socket) => {
 			rooms: getSanitizedRooms(),
 		});
 
-		console.log("A room created by " + gameCreator.username);
+		console.log("A room created by " + host.username);
 	});
 
 	//delete room
@@ -170,12 +211,11 @@ io.on("connection", (socket) => {
 		if (
 			room &&
 			player &&
-			room.players.some((plyr) => plyr.id === player.id)
+			room.players.some((plyr) => plyr.socketId === socket.id)
 		) {
-			player.roomId = "";
-			player.status = "idle";
+			player.leaveRoom();
 
-			room.removePlayer(player.id);
+			room.removePlayer(socket.id);
 
 			if (room.players.length === 0) {
 				delete rooms[roomId];
@@ -191,19 +231,40 @@ io.on("connection", (socket) => {
 	});
 
 	//join room..
-	socket.on("joinRoom", (data) => {
-		const { id, password } = data;
+	socket.on("joinRoom", (roomId) => {
+		//get room
+		const room = rooms[roomId];
+		//get player..
+		const player = players[socket.id];
 
-		const room = rooms[id];
-		if (room) {
-			if (room.withPassword && room.password !== password) {
-				socket.emit("sendStatus", {
-					error: "Password submitted is incorrect!",
+		if (room && player) {
+			player.setRoom(room.id);
+			player.status = "playing";
+
+			room.addPlayer({
+				username: player.username,
+				socketId: socket.id,
+				wins: 0,
+				loss: 0,
+			});
+
+			const host = players[room.players[0].socketId];
+			host.status = "playing";
+
+			room.players.forEach((player) => {
+				io.to(player.socketId).emit("initGame", {
+					room: room,
 				});
-				return;
-			}
-			console.log("A user joined room : ", id);
+			});
 		}
+
+		//update game info..
+		io.emit("updateGameData", {
+			players: Object.values(players),
+			rooms: getSanitizedRooms(),
+		});
+
+		console.log(`${player.username} has joined a room. Game ID : ${roomId}`);
 	});
 
 	//spectate room..
@@ -220,7 +281,6 @@ io.on("connection", (socket) => {
 		const targetPlayer = players[targetSocket];
 
 		// console.log(sender, targetPlayer);
-
 		if (sender && targetPlayer) {
 			const senderData = {
 				username: sender.username,
@@ -235,7 +295,8 @@ io.on("connection", (socket) => {
 			const messageData = {
 				sender: senderData,
 				message: message,
-				timestamp: new Date().toISOString(),
+				type: "regular",
+				timestamp: Date.now(),
 				// isRead: false,
 			};
 
@@ -244,51 +305,173 @@ io.on("connection", (socket) => {
 				sender: senderData,
 				message: messageData,
 			});
-
-			socket.emit("updateMessage", {
-				target: targetData,
+			socket.emit("receivedMessage", {
+				sender: targetData,
 				message: messageData,
 			});
 
-			// const existingChat = getChat(sender.id, targetPlayer.id) || null;
-			// if (!existingChat) {
-			// 	const newChat = new Chat(socket.id, 2, [
-			// 		sender.id,
-			// 		targetPlayer.id,
-			// 	]);
-			// 	newChat.addMessage(messageData);
-			// 	chats[socket.id] = newChat;
-
-			// 	io.to(targetSocket).emit("receivedMessage", {
-			// 		sender: senderData,
-			// 		messages: newChat.getMessages(),
-			// 	});
-			// 	socket.emit("updateMessage", {
-			// 		target: targerData,
-			// 		messages: newChat.getMessages(),
-			// 	});
-			// } else {
-			// 	existingChat.addMessage(messageData);
-			// 	io.to(targetSocket).emit("receivedMessage", {
-			// 		sender: senderData,
-			// 		messages: existingChat.getMessages(),
-			// 	});
-			// 	socket.emit("updateMessage", {
-			// 		target: targerData,
-			// 		messages: existingChat.getMessages(),
-			// 	});
-			// }
+			// socket.emit("updateMessage", {
+			// 	target: targetData,
+			// 	message: messageData,
+			// });
 
 			console.log("A message was sent successfully.");
 		}
 	});
 
-	//join game room
-	socket.on("joinGameRoom", (gameRoomId) => {
-		console.log("A user joined game room : ", gameRoomId);
+	//invite response
+	socket.on("inviteResponse", (data) => {
+		const { response, id } = data;
+		const player = players[socket.id];
+
+		const room = rooms[id];
+
+		if (room && player && player.id === room.playerInvitedId) {
+			room.removeInvited();
+
+			if (response === "accept") {
+				player.setRoom(room.id);
+				player.status = "playing";
+
+				//room.players[0].status = "playing";
+				const host = players[room.players[0].socketId];
+				host.status = "playing";
+
+				room.addPlayer({
+					username: player.username,
+					socketId: socket.id,
+					wins: 0,
+					loss: 0,
+				});
+
+				//initialize game..
+				room.players.forEach((player) => {
+					io.to(player.socketId).emit("initGame", {
+						room: room,
+					});
+				});
+
+				console.log(player.username, "has accepted the invite");
+				//..
+			} else {
+				const senderData = {
+					username: player.username,
+					socketId: socket.id,
+				};
+
+				const targetData = {
+					username: room.players[0].username,
+					socketId: room.players[0].socketId,
+				};
+
+				io.to(room.players[0].socketId).emit("receivedMessage", {
+					sender: senderData,
+					message: {
+						sender: senderData,
+						message: `(Game invitation has been declined. Game ID : ${room.id})`,
+						type: "regular",
+						timeStamp: Date.now(),
+					},
+				});
+
+				socket.emit("receivedMessage", {
+					sender: targetData,
+					message: {
+						sender: senderData,
+						message: `(You declined the game invite. Game ID : ${room.id})`,
+						type: "regular",
+						timeStamp: Date.now(),
+					},
+				});
+
+				console.log(player.username, "has declined the invite");
+			}
+		}
+
+		//update game info..
+		io.emit("updateGameData", {
+			players: Object.values(players),
+			rooms: getSanitizedRooms(),
+		});
+	});
+
+	socket.on("invitePlayer", (data) => {
+		const { id, playerId } = data;
+
+		const host = players[socket.id];
+
+		const room = rooms[id];
+
+		const invited = getPlayer(playerId);
+
+		if (!invited) {
+			socket.emit("sendStatus", {
+				error: "Player not found.",
+			});
+			return;
+		}
+		if (invited.socketId === socket.id) {
+			socket.emit("sendStatus", {
+				error: "Invalid player ID.",
+			});
+			return;
+		}
+		if (invited.status !== "idle") {
+			socket.emit("sendStatus", {
+				error: "Player is already in a game.",
+			});
+			return;
+		}
+
+		if (host && room && invited) {
+			room.setInvited(playerId);
+
+			const senderData = {
+				username: host.username,
+				socketId: socket.id,
+			};
+
+			const targetData = {
+				username: invited.username,
+				socketId: invited.socketId,
+			};
+
+			const targetMessageData = {
+				sender: senderData,
+				game: {
+					id: socket.id,
+					type: room.type,
+				},
+				type: "invite",
+				timeStamp: Date.now(),
+			};
+
+			//send to target..
+			io.to(invited.socketId).emit("receivedMessage", {
+				sender: senderData,
+				message: targetMessageData,
+			});
+
+			//send to creator..
+
+			const messageData = {
+				sender: senderData,
+				message: `(Invite Sent. Game ID: ${room.id})`,
+				type: "regular",
+				timeStamp: Date.now(),
+			};
+
+			socket.emit("receivedMessage", {
+				sender: targetData,
+				message: messageData,
+			});
+
+			console.log("invite has been sent to ", invited.username);
+		}
 	});
 
 	//spectate game room
+	//TODO..
 
 	//user left..
 	socket.on("disconnect", () => {
@@ -299,7 +482,7 @@ io.on("connection", (socket) => {
 			//get current player room and remove player, delete if no players..
 			const room = rooms[player.roomId];
 			if (room) {
-				room.removePlayer(player.id);
+				room.removePlayer(player.socketId);
 				if (room.players.length === 0) {
 					delete rooms[player.roomId];
 				}

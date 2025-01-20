@@ -63,7 +63,7 @@ const CustomModal = ({ size = "md", children, onCloseModal }) => {
 				>
 					{children}
 					<div
-						className="absolute -top-3 -right-3 bg-white hover:bg-gray-200 text-black border border-gray-600 font-bold text-xl rounded-full h-6 w-6 text-center select-none cursor-pointer leading-[1.2rem]"
+						className="absolute -top-2.5 -right-2.5 bg-gray-700 hover:text-red-500 text-white font-bold text-lg rounded-full h-5 w-5 text-center select-none cursor-pointer leading-[1rem]"
 						onClick={closeModal}
 					>
 						&times;

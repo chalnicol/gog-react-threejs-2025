@@ -21,6 +21,7 @@ class Player {
 	}
 	leaveRoom() {
 		this.roomId = "";
+		this.status = "idle";
 	}
 }
 

@@ -8,8 +8,7 @@ import FlashMessage from "./FlashMessage";
 import RoomsTable from "./RoomsTable";
 import PlayersTable from "./PlayersTable";
 import ChatBox from "./ChatBox";
-import PasswordModal from "./PasswordModal";
-import InviteModal from "./InviteModal";
+import InvitePlayerModal from "./InvitePlayerModal";
 
 import { io } from "socket.io-client";
 
@@ -26,9 +25,7 @@ const MainPage = ({ playerName }) => {
 	const [chats, setChats] = useState([]);
 	const [unreadMessagesCount, setUnreadMessagesCount] = useState(0);
 	const [chatIndex, setChatIndex] = useState(null);
-	const [showPasswordModal, setShowPasswordModal] = useState(false);
-	const [showInviteModal, setShowInviteModal] = useState(false);
-	const [inviteData, setInviteData] = useState(null);
+	const [showPlayerInviteModal, setShowPlayerInviteModal] = useState(false);
 	const [toJoinRoom, setToJoinRoom] = useState("");
 
 	const chatIndexRef = useRef(null);
@@ -83,14 +80,8 @@ const MainPage = ({ playerName }) => {
 			processReceiveMessage(data);
 		});
 
-		socketInstance.on("updateMessage", (data) => {
-			// console.log("updateMessage", data);
-			updateSentMessage(data);
-		});
-
-		socketInstance.on("inviteToRoom", (data) => {
-			setInviteData(data);
-			setShowInviteModal(true);
+		socketInstance.on("initGame", (data) => {
+			console.log("initializing game", data);
 		});
 
 		const handleResize = () => {
@@ -104,13 +95,20 @@ const MainPage = ({ playerName }) => {
 		// Cleanup event listener
 		return () => {
 			window.removeEventListener("resize", handleResize);
-			socketInstance.off("playerData");
-			socketInstance.off("sendStatus");
-			socketInstance.off("createRoomSuccess");
-			socketInstance.off("createRoomError");
-			socketInstance.off("updatePlayers");
-			socketInstance.off("updateRooms");
-			socketInstance.off("updateGameData");
+			const evnts = [
+				"playerData",
+				"sendStatus",
+				"createRoomSuccess",
+				"createRoomError",
+				"updatePlayers",
+				"updateRooms",
+				"updateGameData",
+				"receivedMessage",
+				"initGame",
+			];
+
+			evnts.forEach((e) => socketInstance.off(e));
+
 			socketInstance.disconnect();
 		};
 	}, []);
@@ -158,8 +156,8 @@ const MainPage = ({ playerName }) => {
 
 	const menuItems = [
 		{ id: 1, name: "welcome", label: "Welcome Page" },
-		{ id: 2, name: "rooms", label: "View Games" },
-		{ id: 3, name: "players", label: "View Online Players" },
+		{ id: 2, name: "players", label: "View Online Players" },
+		{ id: 3, name: "rooms", label: "View All Games" },
 		{ id: 4, name: "chats", label: "Chats" },
 		{ id: 5, name: "about", label: "About" },
 	];
@@ -185,9 +183,6 @@ const MainPage = ({ playerName }) => {
 						},
 					],
 				};
-
-				// Update messages to display in the current chat
-				// setMessages(updatedChats[index].messages);
 			}
 			return updatedChats;
 		});
@@ -204,7 +199,7 @@ const MainPage = ({ playerName }) => {
 			let updatedChats;
 
 			if (index !== -1) {
-				console.log("Updating the current chat.");
+				// console.log("Updating the current chat.");
 				updatedChats = [...prevChats];
 
 				updatedChats[index] = {
@@ -268,22 +263,19 @@ const MainPage = ({ playerName }) => {
 
 	const handleRoomsTableActionClick = (data) => {
 		// console.log("action clicks", data);
-		if (data.action === "joinRoom") {
-			if (data.withPassword) {
-				setToJoinRoom(data.id);
-				setShowPasswordModal(true);
-			} else {
-				socket.emit("joinRoom", { id: data.id, password: "" });
-			}
+		if (data.action === "invitePlayer") {
+			//TODO:
+			setToJoinRoom(data.id);
+			setShowPlayerInviteModal(true);
 		} else {
 			socket.emit(data.action, data.id);
 		}
 	};
 
-	const handlePasswordSubmit = (password) => {
+	const handlePlayerInviteModalSubmit = (playerId) => {
 		// console.log("password submitted, joining room");
-		setShowPasswordModal(false);
-		socket.emit("joinRoom", { id: toJoinRoom, password: password });
+		setShowPlayerInviteModal(false);
+		socket.emit("invitePlayer", { id: toJoinRoom, playerId: playerId });
 	};
 
 	const handleRemoveChat = (id) => {
@@ -347,9 +339,9 @@ const MainPage = ({ playerName }) => {
 		});
 	};
 
-	const handleInviteResponse = (response) => {
-		console.log("invite response received", response);
-		setShowInviteModal(false);
+	const handleInviteResponse = (data) => {
+		// console.log("invite response received", data.response);
+		socket.emit("inviteResponse", data);
 	};
 
 	return (
@@ -387,7 +379,7 @@ const MainPage = ({ playerName }) => {
 											<div className="flex items-center">
 												<p>{item.label}</p>
 												{unreadMessagesCount > 0 && (
-													<p className="ms-2 bg-red-500 h-4 w-6 leading-[0.9rem] text-center rounded-full text-[0.7rem] font-bold text-white">
+													<p className="ms-2 bg-red-500 h-4 w-6 leading-[15px] text-center rounded-full text-[0.7rem] font-bold text-white">
 														{unreadMessagesCount}
 													</p>
 												)}
@@ -416,7 +408,7 @@ const MainPage = ({ playerName }) => {
 						{/* game rooms page */}
 						{content === "rooms" && (
 							<>
-								<div className="w-11/12 max-w-4xl  mx-auto">
+								<div className="w-11/12 max-w-5xl  mx-auto">
 									<FlashMessage status={status} />
 
 									<CreateGame
@@ -426,7 +418,7 @@ const MainPage = ({ playerName }) => {
 									/>
 								</div>
 
-								<div className="w-11/12 max-w-4xl bg-white shadow-lg p-4 mt-6 rounded mx-auto border border-gray-400">
+								<div className="w-11/12 max-w-5xl bg-white shadow-lg p-4 mt-6 rounded mx-auto border border-gray-400">
 									<div className="flex items-center">
 										<h1 className="font-semibold text-lg ">Games</h1>
 										<button className="ms-auto text-xs px-3 py-0.5 bg-sky-700 hover:bg-sky-600 rounded font-semibold text-white">
@@ -438,7 +430,7 @@ const MainPage = ({ playerName }) => {
 										{roomsData.length > 0 ? (
 											<RoomsTable
 												rooms={roomsData}
-												userId={userData.id}
+												socketId={userData.socketId}
 												onActionClick={handleRoomsTableActionClick}
 											/>
 										) : (
@@ -469,6 +461,7 @@ const MainPage = ({ playerName }) => {
 								onRemoveChat={handleRemoveChat}
 								onChangeIndex={handleChangeChatIndex}
 								onSendMessage={handleSendMessage}
+								onInviteResponse={handleInviteResponse}
 							/>
 						)}
 
@@ -477,17 +470,10 @@ const MainPage = ({ playerName }) => {
 					</div>
 				</div>
 
-				{showPasswordModal && (
-					<PasswordModal
-						onSubmit={handlePasswordSubmit}
-						onClose={() => setShowPasswordModal(false)}
-					/>
-				)}
-				{showInviteModal && (
-					<InviteModal
-						inviteData={inviteData}
-						onSubmit={handleInviteResponse}
-						onClose={() => setShowInviteModal(false)}
+				{showPlayerInviteModal && (
+					<InvitePlayerModal
+						onSubmit={handlePlayerInviteModalSubmit}
+						onClose={() => setShowPlayerInviteModal(false)}
 					/>
 				)}
 			</div>

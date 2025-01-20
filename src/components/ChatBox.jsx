@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 
 const ChatBox = ({
 	userSocketId,
@@ -8,10 +8,13 @@ const ChatBox = ({
 	onChangeIndex,
 	onRemoveChat,
 	onSendMessage,
+	onInviteResponse,
 }) => {
 	const [message, setMessage] = useState("");
 
 	const [displayedMessages, setDisplayedMessages] = useState([]);
+
+	const messageWindowRef = useRef(null);
 
 	useEffect(() => {
 		// console.log(chatIndex, chats.length);
@@ -19,6 +22,13 @@ const ChatBox = ({
 			setDisplayedMessages(chats[chatIndex].messages);
 		}
 	}, [chats, chatIndex]);
+
+	useEffect(() => {
+		if (messageWindowRef.current) {
+			messageWindowRef.current.scrollTop =
+				messageWindowRef.current.scrollHeight;
+		}
+	}, [displayedMessages]);
 
 	const getUnreadCount = (id) => {
 		const index = chats.findIndex((chat) => chat.id === id);
@@ -40,7 +50,7 @@ const ChatBox = ({
 	};
 
 	return (
-		<div className="w-11/12 max-w-4xl bg-white shadow-lg p-4 mt-6 rounded mx-auto border border-gray-400">
+		<div className="w-11/12 max-w-5xl bg-white shadow-lg p-4 mt-6 rounded mx-auto border border-gray-400">
 			<h1 className="font-semibold text-lg">Chats</h1>
 			<hr className="border-0 border-b border-gray-400 my-1" />
 
@@ -54,7 +64,7 @@ const ChatBox = ({
 									className={`flex items-center px-2 py-1 min-w-40  border-r border-white font-medium text-sm ${
 										index === chatIndex
 											? "bg-gray-700"
-											: "bg-gray-400 text-gray-500 cursor-pointer hover:bg-gray-500 hover:text-gray-200"
+											: "bg-gray-400 text-gray-50 cursor-pointer hover:bg-gray-500 hover:text-gray-200"
 									}`}
 								>
 									{getUnreadCount(chat.id) > 0 && (
@@ -82,12 +92,15 @@ const ChatBox = ({
 						</div>
 
 						<div className="w-full bg-green-100">
-							<div className="h-[430px] overflow-auto">
+							<div
+								ref={messageWindowRef}
+								className="h-[430px] overflow-auto"
+							>
 								{displayedMessages.length > 0 ? (
 									displayedMessages.map((msg, index) => (
 										<div
 											key={index}
-											className={`flex flex-col text-sm text-gray-700 items-start border-b border-gray-300 even:bg-teal-100 py-1.5 px-2`}
+											className={`flex flex-col text-sm text-gray-700 items-start border-b border-gray-300 even:bg-emerald-100 py-1.5 px-2`}
 										>
 											<div
 												className={`font-bold text-xs min-w-28 rounded ${
@@ -101,9 +114,59 @@ const ChatBox = ({
 													: msg.sender.username}
 												:
 											</div>
-											<div className="rounded leading-snug">
-												{msg.message}
-											</div>
+											{msg.type === "regular" && (
+												<div className="rounded leading-snug">
+													{msg.message}
+												</div>
+											)}
+											{msg.type === "invite" && (
+												<div className="border border-gray-400 shadow rounded bg-white my-2 overflow-hidden">
+													<div className="font-bold text-xs p-2 bg-gray-700 text-white">
+														Game Invite
+													</div>
+													<div className="px-3 py-2">
+														<div className="font-semibold text-gray-600">
+															I am challenging you to a{" "}
+															<span className="text-xs mx-1 rounded border border-gray-400 px-1.5 font-bold shadow">
+																{msg.game.type}
+															</span>{" "}
+															game! Accept the challenge?
+														</div>
+														<div className="border rounded my-3 p-2 border border-gray-400 shadow-inner bg-gray-100">
+															<p>
+																Game ID :{" "}
+																<span className="font-semibold">
+																	{msg.game.id}
+																</span>
+															</p>
+														</div>
+														<div className="space-x-1 mt-3 mb-1">
+															<button
+																className="text-sm py-0.5 bg-blue-500 hover:bg-blue-600 rounded font-semibold text-white w-16"
+																onClick={() =>
+																	onInviteResponse({
+																		id: msg.game.id,
+																		response: "accept",
+																	})
+																}
+															>
+																Accept
+															</button>
+															<button
+																className="text-sm py-0.5 bg-red-500 hover:bg-red-600 rounded font-semibold text-white w-16"
+																onClick={() =>
+																	onInviteResponse({
+																		id: msg.game.id,
+																		response: "decline",
+																	})
+																}
+															>
+																Decline
+															</button>
+														</div>
+													</div>
+												</div>
+											)}
 										</div>
 									))
 								) : (
