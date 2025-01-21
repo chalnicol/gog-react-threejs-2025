@@ -1,11 +1,11 @@
 import React, { useState } from "react";
 
-const SelectGame = ({ onSelectGame }) => {
-	const [gameOpponent, setGameOpponent] = useState("ai");
+const QuickPlay = ({ onQuickPlay }) => {
+	const [gameOpponent, setGameOpponent] = useState("online");
 	const [gameType, setGameType] = useState("classic");
 
 	const handleSelectGame = () => {
-		onSelectGame({
+		onQuickPlay({
 			opponent: gameOpponent,
 			type: gameType,
 		});
@@ -52,17 +52,6 @@ const SelectGame = ({ onSelectGame }) => {
 					<div className="flex text-lg font-medium mt-1 border border-gray-400 rounded">
 						<button
 							className={`flex-1 p-1 rounded-l ${
-								gameOpponent == "ai"
-									? "bg-green-400 shadow-inner-soft-dark text-white"
-									: "bg-gray-200 hover:bg-gray-300"
-							}`}
-							onClick={(e) => setGameOpponent("ai")}
-							disabled={gameOpponent == "ai"}
-						>
-							AI
-						</button>
-						<button
-							className={`flex-1 p-1 rounded-r ${
 								gameOpponent == "online"
 									? "bg-green-400 shadow-inner-soft-dark text-white"
 									: "bg-gray-200 hover:bg-gray-300"
@@ -71,6 +60,17 @@ const SelectGame = ({ onSelectGame }) => {
 							disabled={gameOpponent == "online"}
 						>
 							Online Player
+						</button>
+						<button
+							className={`flex-1 p-1 rounded-r ${
+								gameOpponent == "ai"
+									? "bg-green-400 shadow-inner-soft-dark text-white"
+									: "bg-gray-200 hover:bg-gray-300"
+							}`}
+							onClick={(e) => setGameOpponent("ai")}
+							disabled={gameOpponent == "ai"}
+						>
+							AI
 						</button>
 					</div>
 				</div>
@@ -86,4 +86,4 @@ const SelectGame = ({ onSelectGame }) => {
 	);
 };
 
-export default SelectGame;
+export default QuickPlay;

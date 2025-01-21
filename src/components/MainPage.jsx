@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import CreateGame from "./CreateGame";
-import SelectGame from "./SelectGame";
+import QuickPlay from "./QuickPlay";
 import About from "./About";
 import NavBar from "./NavBar";
 import UserDetails from "./UserDetails";
@@ -9,6 +9,9 @@ import RoomsTable from "./RoomsTable";
 import PlayersTable from "./PlayersTable";
 import ChatBox from "./ChatBox";
 import InvitePlayerModal from "./InvitePlayerModal";
+import LoadingScreen from "./LoadingScreen";
+
+import GameComponent from "./GameComponent";
 
 import { io } from "socket.io-client";
 
@@ -27,7 +30,11 @@ const MainPage = ({ playerName }) => {
 	const [chatIndex, setChatIndex] = useState(null);
 	const [showPlayerInviteModal, setShowPlayerInviteModal] = useState(false);
 	const [toJoinRoom, setToJoinRoom] = useState("");
+	const [loading, setLoading] = useState(false);
+	const [loadingCaption, setLoadingCaption] = useState("Loading");
 
+	const [gameInited, setGameInited] = useState(false);
+	const [gameUpdates, setGameUpdates] = useState(null);
 	const chatIndexRef = useRef(null);
 	const sidebarRef = useRef(null);
 
@@ -45,7 +52,7 @@ const MainPage = ({ playerName }) => {
 		socketInstance.on("sendStatus", (data) => {
 			// console.log("status", data);
 			setStatus(data);
-			setTimeout(() => setStatus(null), 2000);
+			// setTimeout(() => setStatus(null), 3000);
 		});
 
 		socketInstance.on("createRoomSuccess", (data) => {
@@ -53,7 +60,7 @@ const MainPage = ({ playerName }) => {
 			setTimeout(() => setCreateRoomSuccess(false), 10); //
 			setCreateRoomErrors(null);
 			setStatus(data);
-			setTimeout(() => setStatus(null), 2000);
+			// setTimeout(() => setStatus(null), 3000);
 		});
 
 		socketInstance.on("createRoomError", (error) => {
@@ -82,6 +89,16 @@ const MainPage = ({ playerName }) => {
 
 		socketInstance.on("initGame", (data) => {
 			console.log("initializing game", data);
+			setGameInited(true);
+			setGameUpdates(data);
+			setLoading(false);
+			setChatIndex(null); //..
+		});
+
+		socketInstance.on("quickPlayFailed", (data) => {
+			setStatus(data);
+			// setTimeout(() => setStatus(null), 3000);
+			setLoading(false);
 		});
 
 		const handleResize = () => {
@@ -105,6 +122,7 @@ const MainPage = ({ playerName }) => {
 				"updateGameData",
 				"receivedMessage",
 				"initGame",
+				"quickPlayFailed",
 			];
 
 			evnts.forEach((e) => socketInstance.off(e));
@@ -188,7 +206,7 @@ const MainPage = ({ playerName }) => {
 		});
 	};
 
-	const processReceiveMessage = (data, activeIndex) => {
+	const processReceiveMessage = (data) => {
 		const { sender, message } = data;
 
 		setChats((prevChats) => {
@@ -246,8 +264,11 @@ const MainPage = ({ playerName }) => {
 		socket.emit("createRoom", data);
 	};
 
-	const gameSelected = (data) => {
+	const handleQuickPlay = (data) => {
 		console.log(data);
+		setLoading(true);
+		setLoadingCaption("Searching");
+		socket.emit("quickPlay", data);
 	};
 
 	const handleMenuClick = () => {
@@ -259,6 +280,7 @@ const MainPage = ({ playerName }) => {
 		setContent(name);
 		setIsSidebarOpen(false);
 		setCreateRoomErrors(null);
+		setStatus(null);
 	};
 
 	const handleRoomsTableActionClick = (data) => {
@@ -344,9 +366,13 @@ const MainPage = ({ playerName }) => {
 		socket.emit("inviteResponse", data);
 	};
 
+	const handleGameAction = (data) => {
+		console.log("game actions received", data);
+	};
+
 	return (
 		<>
-			<div className="fixed top-0 left-0 h-screen w-screen overflow-hidden relative">
+			<div className="fixed top-0 left-0 h-screen w-screen overflow-hidden">
 				<NavBar onMenuClick={handleMenuClick} />
 				<div className="h-[calc(100vh-3rem)] lg:flex relative">
 					{/* sidebar */}
@@ -401,7 +427,12 @@ const MainPage = ({ playerName }) => {
 								<h1 className="text-lg font-bold border-y border-gray-300 text-gray-400 px-3 py-2 bg-gray-50 mt-8 text-center">
 									Welcome to Game of the Generals (Salpakan)
 								</h1>
-								<SelectGame onSelectGame={gameSelected} />
+								<FlashMessage
+									status={status}
+									onClose={() => setStatus(null)}
+								/>
+
+								<QuickPlay onQuickPlay={handleQuickPlay} />
 							</div>
 						)}
 
@@ -409,7 +440,10 @@ const MainPage = ({ playerName }) => {
 						{content === "rooms" && (
 							<>
 								<div className="w-11/12 max-w-5xl  mx-auto">
-									<FlashMessage status={status} />
+									<FlashMessage
+										status={status}
+										onClose={() => setStatus(null)}
+									/>
 
 									<CreateGame
 										reset={createRoomSuccess}
@@ -476,7 +510,14 @@ const MainPage = ({ playerName }) => {
 						onClose={() => setShowPlayerInviteModal(false)}
 					/>
 				)}
+				{loading && <LoadingScreen caption={loadingCaption} />}
 			</div>
+			{gameInited && (
+				<GameComponent
+					gameUpdates={gameUpdates}
+					onGameAction={handleGameAction}
+				/>
+			)}
 		</>
 	);
 };

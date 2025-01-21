@@ -1,11 +1,10 @@
 import express from "express";
 import { Server } from "socket.io";
 import http from "http";
-import path from "path";
+import path, { join } from "path";
 import { fileURLToPath } from "url";
 import Player from "./Player.js";
 import Room from "./Room.js";
-import Chat from "./Chat.js";
 
 // Create Express and HTTP server
 const app = express();
@@ -30,25 +29,12 @@ app.use(express.static(path.join(__dirname, "dist")));
 
 const players = {};
 const rooms = {};
-const chats = {};
+let timer = null;
 
 const generateUniqueId = () => {
 	const randomPart = Math.floor(Math.random() * 1000000000); // 9 digits random number
 	const timestampPart = Date.now() % 1000000000; // Get last 9 digits of timestamp
 	return (randomPart + timestampPart).toString().slice(0, 10); // Ensure it's 10 digits long
-};
-
-const playerExistsById = (playerId) => {
-	return Object.values(players).some((player) => player.id === playerId);
-};
-
-const getChat = (userId1, userId2) => {
-	//
-	return Object.values(chats).find(
-		(chat) =>
-			chat.participants.includes(userId1) ||
-			chat.participants.includes(userId2)
-	);
 };
 
 const getSanitizedRooms = () => {
@@ -60,6 +46,55 @@ const getSanitizedRooms = () => {
 
 const getPlayer = (id) => {
 	return Object.values(players).find((player) => player.id === id) || null;
+};
+
+const joinRoom = (roomId, socketId) => {
+	//get room
+	const room = rooms[roomId];
+	//get player..
+	const player = players[socketId];
+
+	if (room && player) {
+		player.setRoom(room.id);
+		player.status = "playing";
+
+		room.addPlayer({
+			username: player.username,
+			socketId: socketId,
+			wins: 0,
+			loss: 0,
+		});
+
+		const host = players[room.players[0].socketId];
+		host.status = "playing";
+
+		room.players.forEach((player) => {
+			io.to(player.socketId).emit("initGame", {
+				room: room,
+			});
+		});
+
+		console.log(`${player.username} has joined a room. Game ID : ${roomId}`);
+	}
+};
+
+const getAvailableRoom = (type, socketId) => {
+	return (
+		Object.values(rooms).find(
+			(room) =>
+				room.status === "open" &&
+				!room.privateMatch &&
+				room.type === type &&
+				room.players.some((player) => player.socketId !== socketId)
+		) || null
+	);
+};
+
+const broadcastGameData = () => {
+	io.emit("updateGameData", {
+		players: Object.values(players),
+		rooms: getSanitizedRooms(),
+	});
 };
 
 io.on("connection", (socket) => {
@@ -90,7 +125,7 @@ io.on("connection", (socket) => {
 		//check if creator already has a room created..
 		if (host.roomId !== "") {
 			socket.emit("sendStatus", {
-				error: "You are already in a room.",
+				error: "You have an ongoing game request.",
 			});
 			return;
 		}
@@ -232,39 +267,11 @@ io.on("connection", (socket) => {
 
 	//join room..
 	socket.on("joinRoom", (roomId) => {
-		//get room
-		const room = rooms[roomId];
-		//get player..
-		const player = players[socket.id];
-
-		if (room && player) {
-			player.setRoom(room.id);
-			player.status = "playing";
-
-			room.addPlayer({
-				username: player.username,
-				socketId: socket.id,
-				wins: 0,
-				loss: 0,
-			});
-
-			const host = players[room.players[0].socketId];
-			host.status = "playing";
-
-			room.players.forEach((player) => {
-				io.to(player.socketId).emit("initGame", {
-					room: room,
-				});
-			});
-		}
+		//join player in the room..
+		joinRoom(roomId, socket.id);
 
 		//update game info..
-		io.emit("updateGameData", {
-			players: Object.values(players),
-			rooms: getSanitizedRooms(),
-		});
-
-		console.log(`${player.username} has joined a room. Game ID : ${roomId}`);
+		broadcastGameData();
 	});
 
 	//spectate room..
@@ -327,32 +334,13 @@ io.on("connection", (socket) => {
 		const room = rooms[id];
 
 		if (room && player && player.id === room.playerInvitedId) {
+			//remove the invited player from the room..
 			room.removeInvited();
 
 			if (response === "accept") {
-				player.setRoom(room.id);
-				player.status = "playing";
-
-				//room.players[0].status = "playing";
-				const host = players[room.players[0].socketId];
-				host.status = "playing";
-
-				room.addPlayer({
-					username: player.username,
-					socketId: socket.id,
-					wins: 0,
-					loss: 0,
-				});
-
-				//initialize game..
-				room.players.forEach((player) => {
-					io.to(player.socketId).emit("initGame", {
-						room: room,
-					});
-				});
-
+				//join player in the room..
+				joinRoom(room.id, socket.id);
 				console.log(player.username, "has accepted the invite");
-				//..
 			} else {
 				const senderData = {
 					username: player.username,
@@ -467,6 +455,45 @@ io.on("connection", (socket) => {
 			});
 
 			console.log("invite has been sent to ", invited.username);
+		}
+	});
+
+	//quick play
+	socket.on("quickPlay", (data) => {
+		console.log("A user started a quick play");
+		const { opponent, type } = data;
+
+		const player = players[socket.id];
+
+		if (!player) return;
+
+		if (player.status !== "idle") {
+			socket.emit("quickPlayFailed", {
+				error: "You have an ongoing game request.",
+			});
+			return;
+		}
+
+		if (opponent === "online") {
+			const maxRetries = 10;
+			const interval = 500;
+			let attempts = 0;
+
+			const timer = setInterval(() => {
+				const room = getAvailableRoom(type, socket.id);
+				if (room) {
+					joinRoom(room.id, socket.id);
+					broadcastGameData();
+					clearInterval(timer);
+				} else if (++attempts >= maxRetries) {
+					socket.emit("quickPlayFailed", { info: "Failed to join game" });
+					clearInterval(timer);
+				} else {
+					console.log(
+						`${player.username} failed to find room. Attempt ${attempts}: Retrying...`
+					);
+				}
+			}, interval);
 		}
 	});
 

@@ -3,7 +3,6 @@ import React, { useEffect, useRef, useState } from "react";
 const ChatBox = ({
 	userSocketId,
 	chats,
-
 	chatIndex,
 	onChangeIndex,
 	onRemoveChat,

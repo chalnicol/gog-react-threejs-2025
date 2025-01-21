@@ -18,23 +18,26 @@ const SplashScreen = ({ onSubmit }) => {
 
 	return (
 		<div className="h-full w-full bg-gray-300 flex items-center justify-center">
-			<div className="w-11/12 max-w-xl border-2 border-gray-400 text-center py-6 rounded-lg shadow-xl bg-white">
-				<div className="w-10/12 mx-auto">
-					<h1 className="text-2xl font-bold">
+			<div className="w-11/12 max-w-xl border-2 border-gray-400 rounded shadow-xl bg-gray-100 overflow-hidden">
+				<div className="w-10/12 mx-auto pt-6 pb-8">
+					<h1 className="text-2xl font-bold text-center">
 						Game of the Generals (Salpakan)
 					</h1>
-					<p className="text-sm my-3 text-gray-600 font-medium">
-						Built using ReactJS + ThreeJS + NodeJS + Tailwind CSS |
-						Version 0.0.1
-					</p>
-					{/* <p className="text-sm my-3">Version 0.0.1</p> */}
 
-					<form onSubmit={handleFormSubmit} className="mt-6">
+					{/* <p className="text-sm my-1 font-semibold  text-center">
+						Version 0.0.1
+					</p> */}
+					<p className="text-xs text-center bg-gray-300 py-1 mt-3 font-semibold">
+						Powered by ReactJS, ThreeJS, NodeJS, and Tailwind CSS
+					</p>
+					<hr className="my-3 border-gray-400 shadow" />
+					<form onSubmit={handleFormSubmit} className="mt-1 px-1">
+						<span className="text-sm font-semibold">Enter Username</span>
 						<div className="flex flex-col md:flex-row gap-2 mt-1">
 							<input
 								type="text"
-								className="px-3 py-2 border border-gray-500 rounded flex-1 focus:outline-none focus:ring-1 focus:ring-blue-500"
-								placeholder="enter username here.."
+								className="px-3 py-2 border border-gray-500 text-black rounded flex-1 focus:outline-none focus:ring-1 focus:ring-blue-500"
+								// placeholder="enter username here.."
 								value={username}
 								name="username"
 								onChange={(e) => setUsername(e.target.value)}

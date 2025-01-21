@@ -1,11 +1,6 @@
 import React from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import {
-	faLock,
-	faLockOpen,
-	faXmark,
-	faCheck,
-} from "@fortawesome/free-solid-svg-icons";
+import { faXmark, faCheck } from "@fortawesome/free-solid-svg-icons";
 
 const RoomsTable = ({ rooms, socketId, onActionClick }) => {
 	const isInTheRoom = (room, sid) => {
