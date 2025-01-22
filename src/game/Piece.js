@@ -3,17 +3,15 @@ import gsap from "gsap";
 
 class Piece {
 	constructor(index, row, col, player, color, rankValue) {
-		// Create the box (tile)
-
+		// Create the piece..
 		this.index = index;
 		this.row = row;
 		this.col = col;
 		this.tileIndex = col * 9 + row;
-
 		this.player = player;
 		this.rankValue = rankValue;
 		this.color = color;
-		this.isEnabled = player == "self";
+		this.isEnabled = player === "self";
 		this.isSelected = false;
 		this.mesh = this.createMesh();
 	}
@@ -89,7 +87,7 @@ class Piece {
 	}
 
 	// Set position of the square
-	updatePosition(row, col) {
+	updatePosition(row, col, jump = false) {
 		this.row = row;
 		this.col = col;
 		this.tileIndex = col * 9 + row;
@@ -99,8 +97,23 @@ class Piece {
 			y: 0.06,
 			z: col - 8 / 2 + 0.5,
 			ease: "elastic.out(1, 0.6)",
-			duration: 0.6,
+			duration: 0.8,
 		});
+
+		if (jump) {
+			gsap.to(this.mesh.position, {
+				y: 1, // Jump up
+				duration: 0.14, // Quick jump up
+				ease: "power2.out",
+				onComplete: () => {
+					gsap.to(this.mesh.position, {
+						y: 0.06, // Return to the original position
+						duration: 0.4, // Smoothly fall back
+						ease: "bounce.out",
+					});
+				},
+			});
+		}
 	}
 
 	select(selected = true) {

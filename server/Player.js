@@ -8,17 +8,18 @@ class Player {
 		this.roomId = "";
 	}
 
-	// Method to set the player's username
-	// setUsername(username) {
-	// 	this.username = username;
-	// }
 	setRoom(roomId) {
 		this.roomId = roomId; //
 		this.status = "waiting";
 	}
 	joinRoom(roomId) {
 		this.roomId = roomId;
+		this.status = "playing";
 	}
+	setStatus(status) {
+		this.status = status;
+	}
+
 	leaveRoom() {
 		this.roomId = "";
 		this.status = "idle";

@@ -56,7 +56,7 @@ const PlayersTable = ({ players, userId, onAddChatClick }) => {
 										</p>
 									)}
 									{player.status == "waiting" && (
-										<p className="bg-purple-500 font-bold rounded-full w-20 text-white text-center text-[0.65rem]">
+										<p className="bg-orange-400 font-bold rounded-full w-20 text-white text-center text-[0.65rem]">
 											WAITING
 										</p>
 									)}

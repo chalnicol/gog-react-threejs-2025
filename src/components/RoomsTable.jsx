@@ -76,14 +76,6 @@ const RoomsTable = ({ rooms, socketId, onActionClick }) => {
 						<td className="p-2 text-gray-600 font-medium">
 							{room.players[0].username}
 						</td>
-						<td className="p-2">
-							<span className="text-sm">{room.type}</span>
-						</td>
-
-						<td className="p-2">
-							<span className="text-sm">{room.status}</span>
-						</td>
-
 						<td className="p-2 text-sm">
 							{room.privateMatch ? (
 								<span>Private Match</span>
@@ -92,6 +84,14 @@ const RoomsTable = ({ rooms, socketId, onActionClick }) => {
 							)}
 							{/* <span className="text-xs">{game.status}</span> */}
 						</td>
+						<td className="p-2">
+							<span className="text-sm">{room.type}</span>
+						</td>
+
+						<td className="p-2">
+							<span className="text-sm">{room.status}</span>
+						</td>
+
 						<td className="p-2 text-base">
 							{room.allowSpectators ? (
 								<FontAwesomeIcon

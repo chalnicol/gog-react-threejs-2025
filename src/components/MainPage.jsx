@@ -87,18 +87,20 @@ const MainPage = ({ playerName }) => {
 			processReceiveMessage(data);
 		});
 
-		socketInstance.on("initGame", (data) => {
-			console.log("initializing game", data);
-			setGameInited(true);
-			setGameUpdates(data);
-			setLoading(false);
-			setChatIndex(null); //..
-		});
-
 		socketInstance.on("quickPlayFailed", (data) => {
 			setStatus(data);
 			// setTimeout(() => setStatus(null), 3000);
 			setLoading(false);
+		});
+
+		socketInstance.on("sendGameUpdate", (data) => {
+			// console.log("sending game updates", data);
+			if (data.event == "initGame") {
+				setGameInited(true);
+				setLoading(false);
+				setChatIndex(null); //..
+			}
+			setGameUpdates(data);
 		});
 
 		const handleResize = () => {
@@ -267,7 +269,7 @@ const MainPage = ({ playerName }) => {
 	const handleQuickPlay = (data) => {
 		console.log(data);
 		setLoading(true);
-		setLoadingCaption("Searching");
+		setLoadingCaption(data.opponent === "online" ? "Searching" : "Loading");
 		socket.emit("quickPlay", data);
 	};
 
@@ -362,7 +364,7 @@ const MainPage = ({ playerName }) => {
 	};
 
 	const handleInviteResponse = (data) => {
-		// console.log("invite response received", data.response);
+		console.log("invite response received", data.response);
 		socket.emit("inviteResponse", data);
 	};
 

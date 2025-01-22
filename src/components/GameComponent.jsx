@@ -1,51 +1,77 @@
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import ThreeJSGame from "../game/ThreeJSGame";
 import gsap from "gsap";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faArrowLeft } from "@fortawesome/free-solid-svg-icons";
+import GameHeader from "./GameHeader";
 
 const GameComponent = ({ gameUpdates, onGameAction }) => {
+	//
+	const [players, setPlayers] = useState([]);
+	const [clock, setClock] = useState(null);
+	const [turn, setTurn] = useState(0);
+
 	const gameRef = useRef(null);
 	const containerRef = useRef(null);
 	const gameInitedRef = useRef(false);
 
-	useEffect(() => {
-		console.log(gameUpdates);
-	}, [gameUpdates]);
+	const initThreeJSGame = () => {
+		if (containerRef.current) {
+			const threeJSGame = new ThreeJSGame(
+				containerRef.current.id,
+				onGameAction
+			);
+			threeJSGame.init();
+			threeJSGame.createPieces(1);
+			gameRef.current = threeJSGame;
+		}
+	};
 
 	useEffect(() => {
-		let game;
+		if (gameUpdates) {
+			switch (gameUpdates.event) {
+				case "initGame":
+					if (!gameInitedRef.current) {
+						//animate game container..
+						gsap.from(containerRef.current, {
+							scale: 0,
+							duration: 0.5,
+							ease: "power4.out",
+							// onComplete: () => initThreeJSGame(),
+						});
+						setPlayers(gameUpdates.players);
 
-		const initGame = () => {
-			if (containerRef.current) {
-				//game = new ThreeJSGame(containerRef.current.id, onGameAction);
-				//game.init();
-				//gameRef.current = game;
+						//..
+						gameInitedRef.current = true;
+						console.log("initializing game");
+					}
+					break;
+				case "startPrep":
+					setTurn(gameUpdates.turn);
+					setClock(gameUpdates.clock);
+					console.log("starting prep..", gameUpdates.clock);
+					break;
+				case "clockTick":
+					setClock(gameUpdates.clock);
+					console.log("clock tick..", gameUpdates.clock);
+					break;
+				case "switchTurn":
+					setTurn(gameUpdates.turn);
+					setClock(gameUpdates.clock);
+					console.log("switching turn..", gameUpdates.turn);
+					break;
+				default:
+				//..
 			}
-		};
-		const openAnimation = () => {
-			gsap.from(containerRef.current, {
-				scale: 0,
-				duration: 0.6,
-				ease: "power4.out",
-				onComplete: () => initGame(),
-			});
-		};
-
-		if (!gameInitedRef.current) {
-			openAnimation();
-			gameInitedRef.current = true;
 		}
 
 		// Cleanup function to dispose of Three.js objects
 		return () => {
-			if (game) {
-				// game.dispose(); // Call the cleanup method in the ThreeJSGame class
+			if (gameRef.current) {
+				// Call the cleanup method in the ThreeJSGame class
 			}
 		};
-	}, []);
+	}, [gameUpdates]);
 
-	const handleCloseGame = () => {
+	const handleLeaveGame = () => {
 		// onGameAction("closeGame");
 	};
 
@@ -56,27 +82,13 @@ const GameComponent = ({ gameUpdates, onGameAction }) => {
 				className="bg-black h-full w-full"
 				id="canvas-container"
 			></div>
-			<div className="absolute bg-gray-600 h-12 w-full top-0">
-				<div className="flex items-center h-full">
-					<div className="flex justify-center items-center gap-x-2 px-4 absolute h-full w-full  font-semibold">
-						<div className="rounded bg-white border border-gray-500 min-w-44 w-1/4 flex items-center px-3 shadow-inner h-2/3">
-							Player1
-						</div>
-						<div className="font-bold text-white h-2/3 aspect-square bg-red-600 border border-gray-500 flex items-center justify-center rounded-full">
-							VS
-						</div>
-						<div className="rounded bg-white border border-gray-500 min-w-44 w-1/4 flex items-center px-3 shadow-inner h-2/3">
-							Player2
-						</div>
-					</div>
-					<button
-						className="text-white bg-orange-600 hover:bg-orange-500 font-bold w-6 text-xs aspect-square rounded-full absolute left-2"
-						onClick={handleCloseGame}
-					>
-						<FontAwesomeIcon icon={faArrowLeft} />
-					</button>
-				</div>
-			</div>
+
+			<GameHeader
+				players={players}
+				turn={turn}
+				clock={clock}
+				onLeave={handleLeaveGame}
+			/>
 		</div>
 	);
 };

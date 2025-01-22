@@ -45,10 +45,10 @@ const FlashMessage = ({ status, onClose }) => {
 				</div>
 			)}
 			{status?.info && (
-				<div className="text-white px-3 mt-3 py-2 bg-teal-500 rounded gap-x-2 font-medium border-2 border-teal-400 flex items-center">
+				<div className="text-white px-3 mt-3 py-2 bg-teal-400 rounded gap-x-2 font-medium border-2 border-teal-300 flex items-center">
 					<FontAwesomeIcon icon={faCircleInfo} /> {status.info}
 					<button
-						className="font-bold ms-auto text-xs hover:bg-teal-400 px-1"
+						className="font-bold ms-auto text-xs hover:bg-teal-300 px-1"
 						onClick={onClose}
 					>
 						<FontAwesomeIcon icon={faXmark} />

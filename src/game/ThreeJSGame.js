@@ -2,6 +2,7 @@ import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 import Tile from "./Tile.js";
 import Piece from "./Piece.js";
+import gsap from "gsap";
 
 class ThreeJSGame {
 	constructor(containerId, eventCallBack) {
@@ -22,7 +23,7 @@ class ThreeJSGame {
 		this.clickableTiles = [];
 		this.clickablePieces = [];
 		this.toMovePiece = null;
-		this.gamePhase = "";
+		this.gamePhase = "prep";
 
 		this.rankValues = [
 			0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 12, 12, 12, 12, 12, 13, 13,
@@ -32,7 +33,7 @@ class ThreeJSGame {
 	}
 
 	init() {
-		this.initTilesAndPieces();
+		this.createTiles();
 		this.setupCameraAndControls();
 		this.addLights();
 		this.setupEventListeners();
@@ -129,9 +130,11 @@ class ThreeJSGame {
 		const shuffledArray = this.shuffleArray(this.rankValues);
 
 		for (let i = 0; i < 21; i++) {
-			const row = i % 9;
+			const row = player === "self" ? i % 9 : 8 - (i % 9);
 			const col =
-				player === "self" ? 7 - Math.floor(i / 9) : Math.floor(i / 9);
+				player === "self" ? 5 + Math.floor(i / 9) : 2 - Math.floor(i / 9);
+			// console.log(row, col, player, color);
+
 			const piece = new Piece(
 				player === "self" ? i : i + 21,
 				row,
@@ -140,6 +143,7 @@ class ThreeJSGame {
 				color,
 				shuffledArray[i]
 			);
+
 			this.pieces.push(piece);
 
 			this.clickablePieces.push(piece.mesh.children[0]);
@@ -150,9 +154,7 @@ class ThreeJSGame {
 		}
 	}
 
-	initTilesAndPieces() {
-		this.createTiles();
-		const selfColor = Math.floor(Math.random() * 2);
+	createPieces(selfColor = 0) {
 		this.createPlayerPieces("self", selfColor === 0 ? "white" : "black");
 		this.createPlayerPieces("oppo", selfColor === 1 ? "white" : "black");
 	}
@@ -218,8 +220,8 @@ class ThreeJSGame {
 		this.tiles[toMoveTileIndex].pieceIndex = clickedPieceIndex;
 		this.tiles[clickedTileIndex].pieceIndex = this.toMovePiece.index;
 
-		this.toMovePiece.updatePosition(clickedRow, clickedCol);
-		this.pieces[clickedPieceIndex].updatePosition(toMoveRow, toMoveCol);
+		this.toMovePiece.updatePosition(clickedRow, clickedCol, true);
+		this.pieces[clickedPieceIndex].updatePosition(toMoveRow, toMoveCol, true);
 	}
 
 	movePiece(clickedTileIndex) {
@@ -265,7 +267,7 @@ class ThreeJSGame {
 
 	getTilesInZone() {
 		this.tiles.forEach((tile) => {
-			if (tile.col > 4 && tile.pieceIndex !== toMovePiece.index) {
+			if (tile.col > 4 && tile.pieceIndex !== this.toMovePiece.index) {
 				tile.blink();
 			}
 		});

@@ -5,6 +5,7 @@ import path, { join } from "path";
 import { fileURLToPath } from "url";
 import Player from "./Player.js";
 import Room from "./Room.js";
+import { create } from "domain";
 
 // Create Express and HTTP server
 const app = express();
@@ -26,10 +27,9 @@ const __dirname = path.dirname(__filename);
 app.use(express.static(path.join(__dirname, "dist")));
 
 //game codes..
-
 const players = {};
 const rooms = {};
-let timer = null;
+const timers = {};
 
 const generateUniqueId = () => {
 	const randomPart = Math.floor(Math.random() * 1000000000); // 9 digits random number
@@ -55,27 +55,137 @@ const joinRoom = (roomId, socketId) => {
 	const player = players[socketId];
 
 	if (room && player) {
-		player.setRoom(room.id);
-		player.status = "playing";
+		//set player id..
+		player.joinRoom(room.id);
 
+		//set host status..
+		const host = players[room.players[0].socketId];
+		host.setStatus("playing");
+
+		//add player to the room players list..
 		room.addPlayer({
 			username: player.username,
 			socketId: socketId,
-			wins: 0,
-			loss: 0,
 		});
 
-		const host = players[room.players[0].socketId];
-		host.status = "playing";
-
-		room.players.forEach((player) => {
-			io.to(player.socketId).emit("initGame", {
-				room: room,
-			});
-		});
+		//initialize game..
+		// room.initGame();
+		initGame(room.id);
 
 		console.log(`${player.username} has joined a room. Game ID : ${roomId}`);
 	}
+};
+
+const initGame = (roomId) => {
+	const room = rooms[roomId];
+	room.initGame();
+
+	clearTimeout(timers[roomId]);
+	timers[roomId] = setTimeout(() => startPrep(roomId), 1000);
+
+	//emit..
+	emitData(roomId, { event: "initGame", players: room.players });
+};
+
+const startPrep = (roomId) => {
+	const room = rooms[roomId];
+	room.startPrep();
+
+	//emit..
+	emitData(roomId, {
+		event: "startPrep",
+		clock: room.clock,
+		turn: 0,
+	});
+
+	//..
+	startClock(roomId);
+};
+
+const startClock = (roomId) => {
+	const room = rooms[roomId];
+	let tick = 0;
+
+	clearInterval(timers[roomId]);
+	timers[roomId] = setInterval(() => {
+		tick++;
+		emitData(roomId, { event: "clockTick", clock: 5 - tick });
+
+		if (tick >= 5) {
+			clearInterval(timers[roomId]);
+			clockEnds(roomId);
+		}
+	}, 1000);
+};
+
+const clockEnds = (roomId) => {
+	const room = rooms[roomId];
+	if (room.phase === "prep") {
+		// room.startGame();
+	} else {
+		// room.endGame();
+	}
+};
+
+const switchTurn = (roomId) => {
+	const room = rooms[roomId];
+	room.switchTurn();
+
+	//emit..
+	emitData(roomId, { event: "switchTurn", clock: 5, turn: room.turn });
+
+	startClock(roomId);
+};
+
+const emitData = (roomId, data) => {
+	const room = rooms[roomId];
+	if (room.vsAi) {
+		io.to(room.players[0].socketId).emit("sendGameUpdate", data);
+	} else {
+		room.players.forEach((player) => {
+			io.to(player.socketId).emit(sendGameUpdate, data);
+		});
+	}
+};
+
+const createRoom = (
+	socketId,
+	type,
+	playerInvited,
+	privateGame,
+	allowSpectators,
+	vsAi = false
+) => {
+	const host = players[socketId];
+
+	if (host) {
+		host.setRoom(socketId);
+
+		const newRoom = new Room(
+			socketId,
+			{
+				username: host.username,
+				socketId: socketId,
+			},
+			playerInvited,
+			type,
+			privateGame,
+			allowSpectators,
+			eventCallback,
+			vsAi
+		);
+
+		rooms[socketId] = newRoom;
+
+		return newRoom;
+	}
+	return null;
+};
+
+const eventCallback = (data) => {
+	const { socketId, game } = data;
+	// io.to(socketId).emit("sendGameUpdate", game);
+	console.log("room event has been sent..", data.event);
 };
 
 const getAvailableRoom = (type, socketId) => {
@@ -84,6 +194,7 @@ const getAvailableRoom = (type, socketId) => {
 			(room) =>
 				room.status === "open" &&
 				!room.privateMatch &&
+				!room.vsAi &&
 				room.type === type &&
 				room.players.some((player) => player.socketId !== socketId)
 		) || null
@@ -108,10 +219,7 @@ io.on("connection", (socket) => {
 		socket.emit("playerData", player);
 
 		//sent to all including self..
-		io.emit("updateGameData", {
-			players: Object.values(players),
-			rooms: getSanitizedRooms(),
-		});
+		broadcastGameData();
 	});
 
 	//create game room
@@ -156,27 +264,16 @@ io.on("connection", (socket) => {
 			return;
 		}
 
-		//all good to create a new room..
-
-		const hostData = {
-			username: host.username,
-			socketId: host.socketId,
-			wins: 0,
-			loss: 0,
-		};
-
-		const newRoom = new Room(
+		//create the room..
+		const newRoom = createRoom(
 			socket.id,
-			hostData,
-			playerInvited,
 			type,
+			playerInvited,
 			privateGame,
-			allowSpectators
+			allowSpectators,
+			false
 		);
 
-		rooms[socket.id] = newRoom;
-
-		host.setRoom(socket.id);
 		//send invite if playerInvited is 	present
 		if (playerInvited !== "" && invited !== null) {
 			const senderData = {
@@ -223,14 +320,11 @@ io.on("connection", (socket) => {
 		}
 		//send status success..
 		socket.emit("createRoomSuccess", {
-			success: "Room has been created successfully!",
+			success: "Game room has been created successfully!",
 		});
 
 		//sent to all including self..
-		io.emit("updateGameData", {
-			players: Object.values(players),
-			rooms: getSanitizedRooms(),
-		});
+		broadcastGameData();
 
 		console.log("A room created by " + host.username);
 	});
@@ -259,10 +353,7 @@ io.on("connection", (socket) => {
 		}
 
 		//update game data..
-		io.emit("updateGameData", {
-			players: Object.values(players),
-			rooms: getSanitizedRooms(),
-		});
+		broadcastGameData();
 	});
 
 	//join room..
@@ -377,10 +468,7 @@ io.on("connection", (socket) => {
 		}
 
 		//update game info..
-		io.emit("updateGameData", {
-			players: Object.values(players),
-			rooms: getSanitizedRooms(),
-		});
+		broadcastGameData();
 	});
 
 	socket.on("invitePlayer", (data) => {
@@ -460,7 +548,6 @@ io.on("connection", (socket) => {
 
 	//quick play
 	socket.on("quickPlay", (data) => {
-		console.log("A user started a quick play");
 		const { opponent, type } = data;
 
 		const player = players[socket.id];
@@ -486,7 +573,7 @@ io.on("connection", (socket) => {
 					broadcastGameData();
 					clearInterval(timer);
 				} else if (++attempts >= maxRetries) {
-					socket.emit("quickPlayFailed", { info: "Failed to join game" });
+					socket.emit("quickPlayFailed", { error: "Failed to join game" });
 					clearInterval(timer);
 				} else {
 					console.log(
@@ -494,6 +581,21 @@ io.on("connection", (socket) => {
 					);
 				}
 			}, interval);
+		} else {
+			//init game with ai..
+			const roomWithAI = createRoom(socket.id, type, "", true, false, true);
+
+			const aiUniqueId = generateUniqueId();
+			const aiData = roomWithAI.addPlayer({
+				username: `Player${aiUniqueId.substring(0, 6)} (AI)`,
+				socketId: generateUniqueId(),
+			});
+
+			player.setStatus("playing");
+
+			initGame(socket.id);
+
+			broadcastGameData();
 		}
 	});
 
@@ -510,7 +612,11 @@ io.on("connection", (socket) => {
 			const room = rooms[player.roomId];
 			if (room) {
 				room.removePlayer(player.socketId);
-				if (room.players.length === 0) {
+				clearInterval(timers[room.id]);
+				if (
+					(!room.vsAi && room.players.length === 0) ||
+					(room.vsAi && room.players.length < 2)
+				) {
 					delete rooms[player.roomId];
 				}
 			}
@@ -519,10 +625,8 @@ io.on("connection", (socket) => {
 		//remove player..
 		delete players[socket.id];
 
-		io.emit("updateGameData", {
-			players: Object.values(players),
-			rooms: getSanitizedRooms(),
-		});
+		//broadcast update game data..
+		broadcastGameData();
 
 		console.log("A user disconnected");
 	});
