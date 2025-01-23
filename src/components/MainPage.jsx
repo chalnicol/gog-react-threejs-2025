@@ -98,7 +98,8 @@ const MainPage = ({ playerName }) => {
 			if (data.event == "initGame") {
 				setGameInited(true);
 				setLoading(false);
-				setChatIndex(null); //..
+				setChatIndex(null);
+				setContent("welcome");
 			}
 			setGameUpdates(data);
 		});
@@ -266,13 +267,6 @@ const MainPage = ({ playerName }) => {
 		socket.emit("createRoom", data);
 	};
 
-	const handleQuickPlay = (data) => {
-		console.log(data);
-		setLoading(true);
-		setLoadingCaption(data.opponent === "online" ? "Searching" : "Loading");
-		socket.emit("quickPlay", data);
-	};
-
 	const handleMenuClick = () => {
 		// console.log("menu icon clicked");
 		setIsSidebarOpen((currValue) => !currValue);
@@ -368,8 +362,20 @@ const MainPage = ({ playerName }) => {
 		socket.emit("inviteResponse", data);
 	};
 
+	const handleQuickPlay = (data) => {
+		console.log(data);
+		setLoading(true);
+		setLoadingCaption(data.opponent === "online" ? "Searching" : "Loading");
+		socket.emit("quickPlay", data);
+	};
+
 	const handleGameAction = (data) => {
 		console.log("game actions received", data);
+
+		if (data.action === "leaveGame") {
+			setGameInited(false);
+		}
+		socket.emit("gameAction", data);
 	};
 
 	return (

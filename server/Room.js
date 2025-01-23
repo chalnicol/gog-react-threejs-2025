@@ -6,7 +6,6 @@ class Room {
 		type,
 		privateMatch,
 		allowSpectators,
-		eventCallback,
 		vsAi
 	) {
 		this.id = id; // Unique ID
@@ -18,7 +17,6 @@ class Room {
 		this.vsAi = vsAi;
 		this.players = [];
 		this.roundsPlayed = 0;
-		this.eventCallback = eventCallback;
 		this.timer = null;
 		this.turn = 0;
 		this.phase = "";

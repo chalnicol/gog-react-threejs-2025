@@ -65,6 +65,7 @@ const ChatBox = ({
 											? "bg-gray-700"
 											: "bg-gray-400 text-gray-50 cursor-pointer hover:bg-gray-500 hover:text-gray-200"
 									}`}
+									onClick={() => onChangeIndex(chat.id)}
 								>
 									{getUnreadCount(chat.id) > 0 && (
 										<div className="me-1 leading-normal">
@@ -73,12 +74,7 @@ const ChatBox = ({
 											</p>
 										</div>
 									)}
-									<div
-										className="font-medium"
-										onClick={() => onChangeIndex(chat.id)}
-									>
-										{chat.user}
-									</div>
+									<div className="font-medium">{chat.user}</div>
 
 									<button
 										className="ms-auto font-bold hover:text-red-500 px-1 rounded-full text-white text-lg"

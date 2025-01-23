@@ -96,6 +96,7 @@ const startPrep = (roomId) => {
 		event: "startPrep",
 		clock: room.clock,
 		turn: 0,
+		phase: "prep",
 	});
 
 	//..
@@ -143,7 +144,7 @@ const emitData = (roomId, data) => {
 		io.to(room.players[0].socketId).emit("sendGameUpdate", data);
 	} else {
 		room.players.forEach((player) => {
-			io.to(player.socketId).emit(sendGameUpdate, data);
+			io.to(player.socketId).emit("sendGameUpdate", data);
 		});
 	}
 };
@@ -171,7 +172,6 @@ const createRoom = (
 			type,
 			privateGame,
 			allowSpectators,
-			eventCallback,
 			vsAi
 		);
 
@@ -182,10 +182,31 @@ const createRoom = (
 	return null;
 };
 
-const eventCallback = (data) => {
-	const { socketId, game } = data;
-	// io.to(socketId).emit("sendGameUpdate", game);
-	console.log("room event has been sent..", data.event);
+const leaveRoom = (socketId) => {
+	const player = players[socketId];
+
+	const room = rooms[player.roomId];
+
+	console.log("called");
+
+	if (player && room) {
+		const roomId = room.id;
+		const username = player.username;
+
+		player.leaveRoom();
+
+		room.removePlayer(socketId);
+
+		clearInterval(timers[room.id]);
+
+		if (!room.vsAi && room.players.length > 0) {
+			emitData(room.id, { event: "playerLeave", username: username });
+		} else {
+			//delete room..
+			delete rooms[roomId];
+		}
+		console.log(`${username} has left a room.`);
+	}
 };
 
 const getAvailableRoom = (type, socketId) => {
@@ -599,6 +620,12 @@ io.on("connection", (socket) => {
 		}
 	});
 
+	socket.on("gameAction", (data) => {
+		if (data.action === "leaveGame") {
+			leaveRoom(socket.id);
+			broadcastGameData();
+		}
+	});
 	//spectate game room
 	//TODO..
 
@@ -607,19 +634,9 @@ io.on("connection", (socket) => {
 		//get player
 		const player = players[socket.id];
 
-		if (player) {
-			//get current player room and remove player, delete if no players..
-			const room = rooms[player.roomId];
-			if (room) {
-				room.removePlayer(player.socketId);
-				clearInterval(timers[room.id]);
-				if (
-					(!room.vsAi && room.players.length === 0) ||
-					(room.vsAi && room.players.length < 2)
-				) {
-					delete rooms[player.roomId];
-				}
-			}
+		//leave room..
+		if (player && player.roomId !== "") {
+			leaveRoom(socket.id);
 		}
 
 		//remove player..

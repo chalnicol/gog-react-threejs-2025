@@ -1,13 +1,15 @@
 import React, { useEffect, useState, useRef } from "react";
 import ThreeJSGame from "../game/ThreeJSGame";
 import gsap from "gsap";
-import GameHeader from "./GameHeader";
+import GameInterface from "./GameInterface";
 
 const GameComponent = ({ gameUpdates, onGameAction }) => {
 	//
 	const [players, setPlayers] = useState([]);
 	const [clock, setClock] = useState(null);
 	const [turn, setTurn] = useState(0);
+	const [phase, setPhase] = useState(0);
+	const [message, setMessage] = useState("");
 
 	const gameRef = useRef(null);
 	const containerRef = useRef(null);
@@ -35,7 +37,7 @@ const GameComponent = ({ gameUpdates, onGameAction }) => {
 							scale: 0,
 							duration: 0.5,
 							ease: "power4.out",
-							// onComplete: () => initThreeJSGame(),
+							onComplete: () => initThreeJSGame(),
 						});
 						setPlayers(gameUpdates.players);
 
@@ -47,6 +49,7 @@ const GameComponent = ({ gameUpdates, onGameAction }) => {
 				case "startPrep":
 					setTurn(gameUpdates.turn);
 					setClock(gameUpdates.clock);
+					setMessage("Start preparing your ranks...");
 					console.log("starting prep..", gameUpdates.clock);
 					break;
 				case "clockTick":
@@ -57,6 +60,10 @@ const GameComponent = ({ gameUpdates, onGameAction }) => {
 					setTurn(gameUpdates.turn);
 					setClock(gameUpdates.clock);
 					console.log("switching turn..", gameUpdates.turn);
+					break;
+				case "playerLeave":
+					setMessage(`${gameUpdates.username} has left the game.`);
+					console.log("player leave", gameUpdates.username);
 					break;
 				default:
 				//..
@@ -83,11 +90,13 @@ const GameComponent = ({ gameUpdates, onGameAction }) => {
 				id="canvas-container"
 			></div>
 
-			<GameHeader
+			<GameInterface
 				players={players}
 				turn={turn}
 				clock={clock}
-				onLeave={handleLeaveGame}
+				phase={phase}
+				message={message}
+				onGameAction={onGameAction}
 			/>
 		</div>
 	);
