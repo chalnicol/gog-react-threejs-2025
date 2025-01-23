@@ -28,7 +28,7 @@ const SplashScreen = ({ onSubmit }) => {
 						Version 0.0.1
 					</p> */}
 					<p className="text-xs text-center bg-gray-300 py-1 mt-3 font-semibold">
-						Powered by ReactJS, ThreeJS, NodeJS, and Tailwind CSS
+						Powered by ReactJS, ThreeJS, NodeJS, Tailwind CSS and SocketIO
 					</p>
 					<hr className="my-3 border-gray-400 shadow" />
 					<form onSubmit={handleFormSubmit} className="mt-1 px-1">

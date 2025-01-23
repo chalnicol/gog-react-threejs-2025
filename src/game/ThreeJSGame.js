@@ -231,7 +231,11 @@ class ThreeJSGame {
 		const newCol = this.tiles[clickedTileIndex].col;
 
 		this.tiles[clickedTileIndex].pieceIndex = this.toMovePiece.index;
-		this.toMovePiece.updatePosition(newRow, newCol);
+		this.toMovePiece.updatePosition(
+			newRow,
+			newCol,
+			this.gamePhase === "prep"
+		);
 
 		if (this.eventCallBack) {
 			this.eventCallBack({
@@ -261,6 +265,9 @@ class ThreeJSGame {
 		this.pieces.forEach((piece) => piece.select(false));
 	}
 
+	setPiecesEnabled(enabled = true) {
+		this.pieces.forEach((piece) => (piece.isEnabled = enabled));
+	}
 	resetTiles() {
 		this.tiles.forEach((tile) => tile.reset());
 	}

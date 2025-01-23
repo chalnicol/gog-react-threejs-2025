@@ -1,97 +1,183 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
 	faArrowLeft,
 	faBars,
 	faEyeSlash,
 	faCircleInfo,
+	faArrowRight,
+	faGear,
+	faCircleXmark,
+	faCircleCheck,
+	faFlag,
+	faXmark,
 } from "@fortawesome/free-solid-svg-icons";
 import PlayerIndicator from "./PlayerIndicator";
-
+import GamePrompt from "./GamePrompt";
+import gsap from "gsap";
 const GameInterface = ({
 	players,
-	message,
 	phase,
+	message,
 	clock,
 	turn,
 	onGameAction,
 }) => {
-	const [showGameMenu, setShowGameMenu] = useState(false);
+	const [gameMenuShown, setGameMenuShown] = useState(false);
 	const [showMessage, setShowMessage] = useState(false);
-	const [popupmessage, setPopupMessage] = useState(message || "");
 
 	useEffect(() => {
+		setTimeout(() => setGameMenuShown(true), 1000);
+	}, []);
+	useEffect(() => {
 		if (message !== "") {
-			setPopupMessage(message);
 			setShowMessage(true);
-
-			setTimeout(() => {
-				setShowMessage(false);
-				setPopupMessage("");
-			}, 5000);
 		}
 	}, [message]);
 
+	useEffect(() => {
+		if (gameMenuShown) {
+			openAnim();
+		}
+	}, [gameMenuShown]);
+
+	const controlsRef = useRef(null);
+
+	const closeAnim = () => {
+		gsap.to(controlsRef.current, {
+			yPercent: 100,
+			duration: 0.4,
+			ease: "power4.out",
+			onComplete: () => {
+				setGameMenuShown(false);
+			},
+		});
+	};
+
+	const openAnim = () => {
+		gsap.fromTo(
+			controlsRef.current,
+			{ yPercent: 100 },
+			{
+				yPercent: 0,
+				ease: "power4.out",
+				duration: 0.4,
+			}
+		);
+	};
+
+	const handleGameMenuClick = () => {
+		// setGameMenuShown(!gameMenuShown);
+		if (!gameMenuShown) {
+			setGameMenuShown(true);
+		} else {
+			closeAnim();
+		}
+	};
+
+	const isReadyButtonDisabled = useMemo(() => {
+		return phase !== "prep" || players[0].isReady;
+	}, [players, phase]);
+
+	// console.log("p", players);
+
 	return (
 		<>
-			<div className="absolute bg-gray-600 h-12 w-full top-0">
-				<div className="flex items-center h-full">
-					{players && players.length > 0 && (
-						<div className="flex justify-center items-center gap-x-2 px-4 absolute h-full w-full  font-semibold">
-							<PlayerIndicator
-								className={`h-3/4 min-w-44 w-1/4 ${
-									turn === 0 ? "bg-green-300" : "bg-white"
-								}`}
-								clock={clock}
-								username={players[0].username}
-								turn={turn}
-								index={0}
-							/>
-							<div className="font-bold text-white h-2/3 aspect-square border border-red-500 bg-red-600 flex items-center justify-center rounded-full">
-								VS
-							</div>
-							<PlayerIndicator
-								className={`h-3/4 min-w-44 w-1/4 ${
-									turn === 1 ? "bg-green-300" : "bg-white"
-								}`}
-								clock={clock}
-								username={players[1].username}
-								turn={turn}
-								index={1}
-							/>
+			{/* player indicator */}
+			<div className="absolute bg-gray-600 h-32 md:h-12 w-full rounded top-0">
+				{players && players.length > 0 && (
+					<div className="flex flex-col md:flex-row gap-y-2 justify-center items-center gap-x-2 px-4 absolute h-full w-full  font-semibold">
+						<PlayerIndicator
+							className={`${turn === 0 ? "bg-green-200" : "bg-white"}`}
+							clock={clock}
+							username={players[0].username}
+							turn={turn}
+							index={0}
+							phase={phase}
+							isReady={players[0].isReady}
+						/>
+						<div className="absolute md:relative font-bold text-white h-10 md:h-2/3 aspect-square border border-red-500 bg-red-600 flex items-center justify-center rounded-full">
+							VS
 						</div>
+
+						<PlayerIndicator
+							className={`${turn === 1 ? "bg-green-200" : "bg-white"}`}
+							clock={clock}
+							username={players[1].username}
+							turn={turn}
+							index={1}
+							phase={phase}
+							isReady={players[1].isReady}
+						/>
+					</div>
+				)}
+			</div>
+			{/* game controls.. */}
+
+			{gameMenuShown && (
+				<div
+					ref={controlsRef}
+					className="absolute bottom-14 right-0 bg-gray-200 rounded-t w-16 h-3/5 md:h-[calc(100vh-7rem)] overflow-hidden flex flex-col"
+				>
+					<button
+						className={`w-full aspect-square border text-lg border-gray-400 leading-5  ${
+							isReadyButtonDisabled ? "" : "hover:bg-teal-100"
+						}`}
+						onClick={() => onGameAction({ action: "playerReady" })}
+						disabled={isReadyButtonDisabled}
+					>
+						<FontAwesomeIcon
+							icon={faCircleCheck}
+							className={`${
+								isReadyButtonDisabled
+									? "text-gray-500"
+									: "text-green-500"
+							}`}
+						/>
+						<br />
+						<span className="text-sm font-semibold">Ready</span>
+					</button>
+
+					{phase == "main" && (
+						<button
+							className="w-full aspect-square border text-lg border-gray-400 leading-5 hover:bg-teal-100 "
+							onClick={() => onGameAction({ action: "playerSurrender" })}
+						>
+							<FontAwesomeIcon
+								icon={faFlag}
+								className="text-green-600"
+							/>
+							<br />
+							<span className="text-sm font-semibold">Surrender</span>
+						</button>
 					)}
 
-					<div className="absolute top-0 left-0 h-full w-12 bg-red-500">
-						<button
-							className="text-white w-full h-full text-lg"
-							onClick={() => setShowGameMenu((prev) => !prev)}
-						>
-							<FontAwesomeIcon icon={faBars} />
-						</button>
-						{showGameMenu && (
-							<div className="absolute left-0 bg-white w-36 text-sm">
-								{/* <div className="px-3 py-2 space-x-2 hover:bg-red-100 cursor-pointer">
-									<FontAwesomeIcon icon={faEyeSlash} />{" "}
-									<span>Hide Control</span>
-								</div> */}
-								<div
-									className="px-3 py-2 space-x-2 hover:bg-red-100 cursor-pointer"
-									onClick={() => onGameAction({ action: "leaveGame" })}
-								>
-									<FontAwesomeIcon icon={faArrowLeft} />{" "}
-									<span>Leave Game</span>
-								</div>
-							</div>
-						)}
-					</div>
+					<button
+						className="w-full aspect-square border text-lg  border-gray-400 leading-5 hover:bg-teal-100"
+						onClick={() => onGameAction({ action: "leaveGame" })}
+					>
+						<FontAwesomeIcon
+							className="text-red-600"
+							icon={faCircleXmark}
+						/>
+						<br />
+						<span className="text-sm font-semibold">Leave</span>
+					</button>
 				</div>
-			</div>
+			)}
+			<button
+				className="text-white text-2xl rounded-tl-lg bg-amber-500 absolute bottom-0 right-0 w-16 aspect-square"
+				onClick={handleGameMenuClick}
+			>
+				<FontAwesomeIcon icon={gameMenuShown ? faXmark : faGear} />
+			</button>
+
+			{/* prompt */}
 			{showMessage && (
-				<div className="absolute w-11/12 max-w-[350px] left-[50%] translate-x-[-50%] bg-yellow-200 border border-yellow-300 text-gray-800 top-16 px-4 py-2 font-semibold rounded-full">
-					<FontAwesomeIcon icon={faCircleInfo} />
-					<span className="ms-2">{popupmessage}</span>
-				</div>
+				<GamePrompt
+					message={message}
+					onClose={() => setShowMessage(false)}
+				/>
 			)}
 		</>
 	);

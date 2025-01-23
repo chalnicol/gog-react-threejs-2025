@@ -432,7 +432,7 @@ const MainPage = ({ playerName }) => {
 						{/* welcome page */}
 						{content === "welcome" && (
 							<div className="w-[95%] max-w-3xl  mx-auto">
-								<h1 className="text-lg font-bold border-y border-gray-300 text-gray-400 px-3 py-2 bg-gray-50 mt-8 text-center">
+								<h1 className="text-lg font-bold border-y border-gray-400 text-gray-400 px-3 py-2 bg-gray-50 mt-8 text-center">
 									Welcome to Game of the Generals (Salpakan)
 								</h1>
 								<FlashMessage

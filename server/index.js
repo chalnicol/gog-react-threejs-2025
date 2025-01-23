@@ -66,6 +66,7 @@ const joinRoom = (roomId, socketId) => {
 		room.addPlayer({
 			username: player.username,
 			socketId: socketId,
+			isAi: false,
 		});
 
 		//initialize game..
@@ -84,7 +85,11 @@ const initGame = (roomId) => {
 	timers[roomId] = setTimeout(() => startPrep(roomId), 1000);
 
 	//emit..
-	emitData(roomId, { event: "initGame", players: room.players });
+	const toSendData = [
+		{ event: "initGame", players: room.players },
+		{ event: "initGame", players: [...room.players].reverse() },
+	];
+	emitData(roomId, toSendData, true);
 };
 
 const startPrep = (roomId) => {
@@ -94,37 +99,65 @@ const startPrep = (roomId) => {
 	//emit..
 	emitData(roomId, {
 		event: "startPrep",
-		clock: room.clock,
-		turn: 0,
-		phase: "prep",
+		clock: room.prepTime,
+		// phase: "prep",
 	});
 
 	//..
-	startClock(roomId);
+	if (room.type === "blitz") {
+		startClock(roomId);
+	}
 };
 
 const startClock = (roomId) => {
 	const room = rooms[roomId];
+
+	const maxTime = room.phase == "prep" ? room.prepTime : room.turnTime;
+
 	let tick = 0;
 
 	clearInterval(timers[roomId]);
 	timers[roomId] = setInterval(() => {
 		tick++;
-		emitData(roomId, { event: "clockTick", clock: 5 - tick });
+		emitData(roomId, { event: "clockTick", clock: maxTime - tick });
 
-		if (tick >= 5) {
+		if (tick >= maxTime) {
 			clearInterval(timers[roomId]);
-			clockEnds(roomId);
+
+			//perfom action when clock ends..
+			if (room.phase === "prep") {
+				endPrep(roomId);
+			} else {
+				endGame(roomId);
+			}
 		}
 	}, 1000);
 };
 
-const clockEnds = (roomId) => {
+const endPrep = (roomId) => {
+	//..
+
 	const room = rooms[roomId];
-	if (room.phase === "prep") {
-		// room.startGame();
-	} else {
-		// room.endGame();
+	room.setBothPlayersReady();
+
+	const toSendData = [
+		{ event: "endPrep", players: room.players },
+		{ event: "endPrep", players: [...room.players].reverse() },
+	];
+
+	emitData(roomId, toSendData, true);
+
+	timers[roomId] = setTimeout(() => startGame(), 2000);
+};
+
+const startGame = (roomId) => {
+	const room = rooms[roomId];
+
+	if (room) {
+		room.startGame();
+		if (room.type === "blitz") {
+			startClock(roomId);
+		}
 	}
 };
 
@@ -138,15 +171,16 @@ const switchTurn = (roomId) => {
 	startClock(roomId);
 };
 
-const emitData = (roomId, data) => {
+const emitData = (roomId, data, isSeparate = false) => {
 	const room = rooms[roomId];
-	if (room.vsAi) {
-		io.to(room.players[0].socketId).emit("sendGameUpdate", data);
-	} else {
-		room.players.forEach((player) => {
-			io.to(player.socketId).emit("sendGameUpdate", data);
-		});
-	}
+	room.players.forEach((player, index) => {
+		if (!player.isAi) {
+			io.to(player.socketId).emit(
+				"sendGameUpdate",
+				isSeparate ? data[index] : data
+			);
+		}
+	});
 };
 
 const createRoom = (
@@ -162,12 +196,15 @@ const createRoom = (
 	if (host) {
 		host.setRoom(socketId);
 
+		const hostPlayerData = {
+			username: host.username,
+			socketId: socketId,
+			isAi: false,
+		};
+
 		const newRoom = new Room(
 			socketId,
-			{
-				username: host.username,
-				socketId: socketId,
-			},
+			hostPlayerData,
 			playerInvited,
 			type,
 			privateGame,
@@ -187,8 +224,6 @@ const leaveRoom = (socketId) => {
 
 	const room = rooms[player.roomId];
 
-	console.log("called");
-
 	if (player && room) {
 		const roomId = room.id;
 		const username = player.username;
@@ -198,6 +233,7 @@ const leaveRoom = (socketId) => {
 		room.removePlayer(socketId);
 
 		clearInterval(timers[room.id]);
+		clearTimeout(timers[room.id]);
 
 		if (!room.vsAi && room.players.length > 0) {
 			emitData(room.id, { event: "playerLeave", username: username });
@@ -220,6 +256,31 @@ const getAvailableRoom = (type, socketId) => {
 				room.players.some((player) => player.socketId !== socketId)
 		) || null
 	);
+};
+
+//players
+const playerReady = (socketId) => {
+	const player = players[socketId];
+	const room = rooms[player.roomId];
+
+	if (player && room) {
+		room.setPlayerReady(socketId);
+
+		if (room.bothPlayersReady()) {
+			//..end preparation..
+			if (room.type === "blitz") {
+				clearInterval(timers[room.id]);
+			}
+			endPrep(room.id);
+		} else {
+			//emits players ready while waiting for other player to get ready..
+			const toSendData = [
+				{ event: "playerReady", players: room.players },
+				{ event: "playerReady", players: [...room.players].reverse() },
+			];
+			emitData(room.id, toSendData, true);
+		}
+	}
 };
 
 const broadcastGameData = () => {
@@ -606,11 +667,12 @@ io.on("connection", (socket) => {
 			//init game with ai..
 			const roomWithAI = createRoom(socket.id, type, "", true, false, true);
 
-			const aiUniqueId = generateUniqueId();
-			const aiData = roomWithAI.addPlayer({
-				username: `Player${aiUniqueId.substring(0, 6)} (AI)`,
+			const ai = {
+				username: `Player${generateUniqueId().substring(0, 6)} (AI)`,
 				socketId: generateUniqueId(),
-			});
+				isAi: true,
+			};
+			roomWithAI.addPlayer(ai);
 
 			player.setStatus("playing");
 
@@ -624,6 +686,15 @@ io.on("connection", (socket) => {
 		if (data.action === "leaveGame") {
 			leaveRoom(socket.id);
 			broadcastGameData();
+		}
+		switch (data.action) {
+			case "leaveGame":
+				leaveRoom(socket.id);
+				broadcastGameData();
+				break;
+			case "playerReady":
+				playerReady(socket.id);
+				break;
 		}
 	});
 	//spectate game room
