@@ -16,16 +16,17 @@ Make sure you have the following installed on your system:
 
 ```
 root/
-├── client/        # Frontend (React, Vite)
+├── public/        # Public assets
 ├── server/        # Backend (Node.js, Socket.IO)
-├── package.json   # Project-level dependencies (if any)
+├── src/           # Frontend (React, Vite)
+├── package.json   # Project-level dependencies
 ```
 
 ---
 
 ## Getting Started
 
-Follow these steps to set up and run both the **Socket.IO server** and the **Vite client** simultaneously.
+Follow these steps to set up and run both the **Socket.IO server** and the **Vite client**.
 
 ### 1. Clone the Repository
 
@@ -36,65 +37,33 @@ cd <your-repo-folder>
 
 ### 2. Install Dependencies
 
-Navigate to each folder (client and server) and install dependencies:
+At the root level of the project, run:
 
 ```bash
-# For the backend (server):
-cd server
-npm install
-
-# For the frontend (client):
-cd ../client
 npm install
 ```
 
-### 3. Run Both Server and Client
+This will install dependencies for both the frontend and backend.
 
-To run both the server and client simultaneously, you can:
+### 3. Run the Server and Client
 
-#### Option 1: Use Separate Terminals
+To start the project, use the following commands in separate terminals:
 
-1. Open a terminal for the **server**:
+1. Start the **server**:
 
    ```bash
-   cd server
    npm start
    ```
 
-2. Open another terminal for the **client**:
+   The server will run on `http://localhost:3000` by default.
+
+2. Start the **Vite client**:
+
    ```bash
-   cd client
    npm run dev
    ```
 
-The server will run on `http://localhost:3000` by default, and the client will be accessible at `http://localhost:5173`.
-
-#### Option 2: Use a Concurrent Script (Optional)
-
-You can set up a script to run both servers at once using [concurrently](https://www.npmjs.com/package/concurrently):
-
-1. Install `concurrently` at the root level:
-
-   ```bash
-   npm install -g concurrently
-   ```
-
-2. Add the following to your `package.json` at the root level:
-
-   ```json
-   "scripts": {
-     "start": "concurrently \"npm run server\" \"npm run client\"",
-     "server": "cd server && npm start",
-     "client": "cd client && npm run dev"
-   }
-   ```
-
-3. Run the command:
-   ```bash
-   npm run start
-   ```
-
-Both servers will run simultaneously.
+   The client will be accessible at `http://localhost:5173`.
 
 ---
 
@@ -118,12 +87,6 @@ Both servers will run simultaneously.
 
 -  **Installation Errors:**
    Ensure you have the correct Node.js version installed.
-
----
-
-## License
-
-This project is licensed under the MIT License.
 
 ---
 
