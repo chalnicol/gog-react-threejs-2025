@@ -80,6 +80,12 @@ const GameInterface = ({
 	}, [players, phase]);
 
 	// console.log("p", players);
+	const handleControlsClick = (action) => {
+		// if (action !== "leaveGame") {
+		// 	closeAnim();
+		// }
+		onGameAction({ action: action });
+	};
 
 	return (
 		<>
@@ -99,7 +105,6 @@ const GameInterface = ({
 						<div className="absolute md:relative font-bold text-white h-10 md:h-2/3 aspect-square border border-red-500 bg-red-600 flex items-center justify-center rounded-full">
 							VS
 						</div>
-
 						<PlayerIndicator
 							className={`${turn === 1 ? "bg-green-200" : "bg-white"}`}
 							clock={clock}
@@ -117,13 +122,13 @@ const GameInterface = ({
 			{gameMenuShown && (
 				<div
 					ref={controlsRef}
-					className="absolute bottom-14 right-0 bg-gray-200 rounded-t w-16 h-3/5 md:h-[calc(100vh-7rem)] overflow-hidden flex flex-col"
+					className="absolute bottom-14 right-0 bg-gray-200 rounded-t w-16 h-3/5 md:h-[calc(100vh-7rem)] max-h-[400px] overflow-hidden flex flex-col"
 				>
 					<button
 						className={`w-full aspect-square border text-lg border-gray-400 leading-5  ${
 							isReadyButtonDisabled ? "" : "hover:bg-teal-100"
 						}`}
-						onClick={() => onGameAction({ action: "playerReady" })}
+						onClick={() => handleControlsClick("playerReady")}
 						disabled={isReadyButtonDisabled}
 					>
 						<FontAwesomeIcon
@@ -141,7 +146,7 @@ const GameInterface = ({
 					{phase == "main" && (
 						<button
 							className="w-full aspect-square border text-lg border-gray-400 leading-5 hover:bg-teal-100 "
-							onClick={() => onGameAction({ action: "playerSurrender" })}
+							onClick={() => handleControlsClick("playerSurrender")}
 						>
 							<FontAwesomeIcon
 								icon={faFlag}
@@ -154,7 +159,7 @@ const GameInterface = ({
 
 					<button
 						className="w-full aspect-square border text-lg  border-gray-400 leading-5 hover:bg-teal-100"
-						onClick={() => onGameAction({ action: "leaveGame" })}
+						onClick={() => handleControlsClick("leaveGame")}
 					>
 						<FontAwesomeIcon
 							className="text-red-600"

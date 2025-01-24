@@ -1,11 +1,10 @@
 import * as THREE from "three";
 
 class Tile {
-	constructor(row, col, size, color) {
+	constructor(row, col, color) {
 		// Create the box (tile)
 		this.row = row;
 		this.col = col;
-		this.size = size;
 		this.color = color;
 		this.timer = null;
 		this.isEnabled = false;
@@ -20,23 +19,18 @@ class Tile {
 
 		const clr = this.color === "blue" ? 0x0000ff : 0xff0000;
 
-		const boxGeometry = new THREE.BoxGeometry(this.size, 0.1, this.size);
+		const boxGeometry = new THREE.BoxGeometry(1, 0.1, 1);
 		const boxMaterial = new THREE.MeshBasicMaterial({ color: 0xdedede });
 		const square = new THREE.Mesh(boxGeometry, boxMaterial);
 
-		const insideBoxGeometry = new THREE.BoxGeometry(
-			this.size - 0.06,
-			0.11,
-			this.size - 0.06
-		);
+		const insideBoxGeometry = new THREE.BoxGeometry(1 - 0.06, 0.11, 1 - 0.06);
 		const insideBoxMaterial = new THREE.MeshBasicMaterial({ color: clr });
 		const insideSquare = new THREE.Mesh(insideBoxGeometry, insideBoxMaterial);
 
 		pieceGroup.add(square, insideSquare);
 
-		const x = this.row - 9 / 2 + 0.5;
-		const z = this.col - 8 / 2 + 0.5;
-
+		const x = this.col - 9 / 2 + 0.5;
+		const z = this.row - 8 / 2 + 0.5;
 		pieceGroup.position.set(x, 0, z);
 
 		return pieceGroup;
@@ -59,7 +53,7 @@ class Tile {
 		this.isEnabled = true;
 	}
 
-	reset() {
+	clear() {
 		clearInterval(this.timer);
 		const clr = this.color === "blue" ? 0x0000ff : 0xff0000;
 		this.mesh.children[1].material.color.set(clr);

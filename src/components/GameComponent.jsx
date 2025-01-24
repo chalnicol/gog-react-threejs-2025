@@ -15,14 +15,13 @@ const GameComponent = ({ gameUpdates, onGameAction }) => {
 	const containerRef = useRef(null);
 	const gameInitedRef = useRef(false);
 
-	const initThreeJSGame = (clr) => {
+	const initThreeJSGame = () => {
 		if (containerRef.current) {
 			const threeJSGame = new ThreeJSGame(
 				containerRef.current.id,
 				onGameAction
 			);
 			threeJSGame.init();
-			threeJSGame.createPieces(clr);
 			gameRef.current = threeJSGame;
 		}
 	};
@@ -32,21 +31,20 @@ const GameComponent = ({ gameUpdates, onGameAction }) => {
 			switch (gameUpdates.event) {
 				case "initGame":
 					if (!gameInitedRef.current) {
-						//animate game container..
+						gameInitedRef.current = true;
 
-						const players = gameUpdates.players;
+						//animate game container..
+						const { players, playerPieces } = gameUpdates;
+
 						setPlayers(players);
 
-						gsap.from(containerRef.current, {
-							yPercent: -100,
-							duration: 0.5,
-							ease: "power4.out",
-							onComplete: () => initThreeJSGame(players[0].pieceColor),
-						});
-
-						//..
-						gameInitedRef.current = true;
-						console.log("initializing game", players[0].pieceColor);
+						//initialize three js..
+						gameRef.current = new ThreeJSGame(
+							containerRef.current.id,
+							onGameAction
+						);
+						gameRef.current.init(playerPieces);
+						// console.log("initializing game", players[0].pieceColor);
 					}
 					break;
 				case "startPrep":
@@ -56,7 +54,10 @@ const GameComponent = ({ gameUpdates, onGameAction }) => {
 					setMessage(
 						"Prepare your ranks. Click on a piece to move it or swap its position by clicking on another piece. Hit 'Ready' when finished."
 					);
-					console.log("starting prep..", gameUpdates.clock);
+
+					gameRef.current.setPlayerPiecesEnabled();
+					// console.log("starting prep..", gameUpdates.clock);
+
 					break;
 				case "clockTick":
 					setClock(gameUpdates.clock);
@@ -75,7 +76,7 @@ const GameComponent = ({ gameUpdates, onGameAction }) => {
 					setMessage("Game commencing.. Ready to play!");
 					setPhase("");
 					setPlayers(gameUpdates.players);
-					gameRef.current.setPiecesEnabled(false);
+					gameRef.current.endPrep();
 					break;
 				case "playerReady":
 					setPlayers(gameUpdates.players);

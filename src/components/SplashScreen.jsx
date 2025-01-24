@@ -18,7 +18,7 @@ const SplashScreen = ({ onSubmit }) => {
 
 	return (
 		<div className="h-full w-full bg-gray-300 flex items-center justify-center">
-			<div className="w-11/12 max-w-xl border-2 border-gray-400 rounded shadow-xl bg-gray-100 overflow-hidden">
+			<div className="w-11/12 max-w-xl border-2 border-gray-400 rounded-lg shadow-xl bg-gray-100 overflow-hidden">
 				<div className="w-10/12 mx-auto pt-6 pb-8">
 					<h1 className="text-2xl font-bold text-center">
 						Game of the Generals (Salpakan)
@@ -27,7 +27,7 @@ const SplashScreen = ({ onSubmit }) => {
 					{/* <p className="text-sm my-1 font-semibold  text-center">
 						Version 0.0.1
 					</p> */}
-					<p className="text-xs text-center bg-gray-300 py-1 mt-3 font-semibold">
+					<p className="text-xs text-center text-gray-700 py-1 mt-1 font-semibold">
 						Powered by ReactJS, ThreeJS, NodeJS, Tailwind CSS and SocketIO
 					</p>
 					<hr className="my-3 border-gray-400 shadow" />

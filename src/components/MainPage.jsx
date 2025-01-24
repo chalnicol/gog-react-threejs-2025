@@ -370,8 +370,7 @@ const MainPage = ({ playerName }) => {
 	};
 
 	const handleGameAction = (data) => {
-		console.log("game actions received", data);
-
+		// console.log("game actions received", data);
 		if (data.action === "leaveGame") {
 			setGameInited(false);
 		}

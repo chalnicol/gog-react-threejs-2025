@@ -32,8 +32,18 @@ class ThreeJSGame {
 		this.eventCallBack = eventCallBack;
 	}
 
-	init() {
+	init(piecesData = []) {
 		this.createTiles();
+
+		if (piecesData.length > 0) {
+			this.createPlayerPieces(0, piecesData);
+		} else {
+			console.log("no pieces data provided");
+		}
+
+		//const selfPiecesData = this.generatePiecesData(0, "white");
+		//this.createPlayerPieces(0, selfPiecesData);
+
 		this.setupCameraAndControls();
 		this.addLights();
 		this.setupEventListeners();
@@ -116,9 +126,12 @@ class ThreeJSGame {
 		const boardGroup = new THREE.Group();
 		this.scene.add(boardGroup);
 
-		for (let x = 0; x < 8; x++) {
-			for (let y = 0; y < 9; y++) {
-				const square = new Tile(y, x, 1, x < 4 ? "blue" : "red");
+		const rows = 8;
+		const cols = 9;
+
+		for (let row = 0; row < rows; row++) {
+			for (let col = 0; col < cols; col++) {
+				const square = new Tile(row, col, row < 4 ? "blue" : "red");
 				boardGroup.add(square.mesh);
 				this.tiles.push(square);
 				this.clickableTiles.push(square.mesh.children[1]);
@@ -126,43 +139,40 @@ class ThreeJSGame {
 		}
 	}
 
-	createPlayerPieces(player, color) {
-		const shuffledArray = this.shuffleArray(this.rankValues);
+	createPlayerPieces(playerIndex, piecesData = []) {
+		if (!Array.isArray(piecesData) || piecesData.length === 0) return;
 
-		for (let i = 0; i < 21; i++) {
-			const row = player === "self" ? i % 9 : 8 - (i % 9);
-			const col =
-				player === "self" ? 5 + Math.floor(i / 9) : 2 - Math.floor(i / 9);
-			// console.log(row, col, player, color);
-
-			const piece = new Piece(
-				player === "self" ? i : i + 21,
-				row,
-				col,
-				player,
-				color,
-				shuffledArray[i]
-			);
-
+		piecesData.forEach((pieceData, i) => {
+			const { row, col, color, rank } = pieceData;
+			const piece = new Piece(playerIndex, i, row, col, color, rank);
 			this.pieces.push(piece);
-
 			this.clickablePieces.push(piece.mesh.children[0]);
-
-			this.tiles[col * 9 + row].pieceIndex = i;
-
+			this.tiles[row * 9 + col].pieceIndex = i;
 			this.scene.add(piece.mesh);
-		}
+			// console.log(row, col, row * 9 + col);
+		});
 	}
 
-	createPieces(selfColor = 0) {
-		this.createPlayerPieces("self", selfColor === 0 ? "white" : "black");
-		this.createPlayerPieces("oppo", selfColor === 1 ? "white" : "black");
+	generatePiecesData(playerIndex, clr) {
+		const piecesData = [];
+		const ranks = this.getRandomRankValues(this.rankValues);
+		ranks.forEach((rank, i) => {
+			const row = Math.floor(i / 9);
+			const col = i % 9;
+			piecesData.push({
+				row: playerIndex == 0 ? row + 5 : row,
+				col: col,
+				color: clr,
+				rank: rank,
+			});
+		});
+		return piecesData;
 	}
 
 	pieceClicked(index) {
 		if (this.pieces[index].isEnabled) {
-			this.resetPieces();
-			this.resetTiles();
+			this.clearPieces();
+			this.clearTiles();
 
 			if (this.gamePhase === "prep") {
 				if (!this.toMovePiece) {
@@ -192,8 +202,8 @@ class ThreeJSGame {
 
 	tileClicked(index) {
 		if (this.tiles[index].isEnabled) {
-			this.resetPieces();
-			this.resetTiles();
+			this.clearPieces();
+			this.clearTiles();
 
 			if (this.tiles[index].pieceIndex) {
 				if (this.gamePhase === "prep") {
@@ -220,8 +230,17 @@ class ThreeJSGame {
 		this.tiles[toMoveTileIndex].pieceIndex = clickedPieceIndex;
 		this.tiles[clickedTileIndex].pieceIndex = this.toMovePiece.index;
 
-		this.toMovePiece.updatePosition(clickedRow, clickedCol, true);
-		this.pieces[clickedPieceIndex].updatePosition(toMoveRow, toMoveCol, true);
+		this.toMovePiece.updatePosition(clickedRow, clickedCol);
+		this.pieces[clickedPieceIndex].updatePosition(toMoveRow, toMoveCol);
+
+		if (this.eventCallBack) {
+			this.eventCallBack({
+				action: "playerPieceMove",
+				pieceIndex: this.toMovePiece.index,
+				row: clickedRow,
+				col: clickedCol,
+			});
+		}
 	}
 
 	movePiece(clickedTileIndex) {
@@ -231,29 +250,27 @@ class ThreeJSGame {
 		const newCol = this.tiles[clickedTileIndex].col;
 
 		this.tiles[clickedTileIndex].pieceIndex = this.toMovePiece.index;
-		this.toMovePiece.updatePosition(
-			newRow,
-			newCol,
-			this.gamePhase === "prep"
-		);
+		this.toMovePiece.updatePosition(newRow, newCol);
 
 		if (this.eventCallBack) {
 			this.eventCallBack({
-				type: "move",
-				position: { row: newRow, col: newCol },
+				action: "playerPieceMove",
+				pieceIndex: this.toMovePiece.index,
+				row: newRow,
+				col: newCol,
 			});
 		}
 	}
 
-	resetTiles() {
-		this.tiles.forEach((tile) => tile.reset());
+	clearTiles() {
+		this.tiles.forEach((tile) => tile.clear());
 	}
 
-	resetPieces() {
+	clearPieces() {
 		this.pieces.forEach((piece) => piece.select(false));
 	}
 
-	shuffleArray(array) {
+	getRandomRankValues(array) {
 		for (let i = array.length - 1; i > 0; i--) {
 			const randomIndex = Math.floor(Math.random() * (i + 1));
 			[array[i], array[randomIndex]] = [array[randomIndex], array[i]];
@@ -261,20 +278,21 @@ class ThreeJSGame {
 		return array;
 	}
 
-	resetPieces() {
-		this.pieces.forEach((piece) => piece.select(false));
+	setPlayerPiecesEnabled(enabled = true) {
+		this.pieces
+			.filter((piece) => piece.playerIndex === 0)
+			.forEach((piece) => (piece.isEnabled = enabled));
 	}
 
-	setPiecesEnabled(enabled = true) {
-		this.pieces.forEach((piece) => (piece.isEnabled = enabled));
-	}
-	resetTiles() {
-		this.tiles.forEach((tile) => tile.reset());
+	endPrep() {
+		this.setPlayerPiecesEnabled(false);
+		this.clearPieces();
+		this.clearTiles();
 	}
 
 	getTilesInZone() {
 		this.tiles.forEach((tile) => {
-			if (tile.col > 4 && tile.pieceIndex !== this.toMovePiece.index) {
+			if (tile.row >= 5 && tile.pieceIndex !== this.toMovePiece.index) {
 				tile.blink();
 			}
 		});
@@ -296,8 +314,8 @@ class ThreeJSGame {
 			const newRow = row + dir[0];
 			const newCol = col + dir[1];
 
-			if (newRow >= 0 && newRow < 9 && newCol >= 0 && newCol < 8) {
-				adjacentTiles.push(newCol * 9 + newRow);
+			if (newRow >= 0 && newRow < 8 && newCol >= 0 && newCol < 9) {
+				adjacentTiles.push(newRow * 9 + newCol);
 			}
 		}
 

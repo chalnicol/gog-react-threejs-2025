@@ -82,13 +82,24 @@ const initGame = (roomId) => {
 	room.initGame();
 
 	clearTimeout(timers[roomId]);
-	timers[roomId] = setTimeout(() => startPrep(roomId), 1000);
+	timers[roomId] = setTimeout(() => startPrep(roomId), 2000);
 
 	//emit..
 	const toSendData = [
-		{ event: "initGame", players: room.players },
-		{ event: "initGame", players: [...room.players].reverse() },
+		{
+			event: "initGame",
+			players: room.getPlayers(),
+			playerPieces: room.getPieces(),
+		},
+		{
+			event: "initGame",
+			players: room.getPlayers(1),
+			playerPieces: room.getPieces(1),
+		},
 	];
+
+	// console.log(room.getPieces(0));
+
 	emitData(roomId, toSendData, true);
 };
 
@@ -122,8 +133,6 @@ const startClock = (roomId) => {
 		emitData(roomId, { event: "clockTick", clock: maxTime - tick });
 
 		if (tick >= maxTime) {
-			clearInterval(timers[roomId]);
-
 			//perfom action when clock ends..
 			if (room.phase === "prep") {
 				endPrep(roomId);
@@ -137,6 +146,8 @@ const startClock = (roomId) => {
 const endPrep = (roomId) => {
 	//..
 
+	clearInterval(timers[roomId]);
+
 	const room = rooms[roomId];
 	room.setBothPlayersReady();
 
@@ -144,6 +155,8 @@ const endPrep = (roomId) => {
 		{ event: "endPrep", players: room.players },
 		{ event: "endPrep", players: [...room.players].reverse() },
 	];
+
+	// console.log(room.pieces.filter((p) => p.playerIndex === 0));
 
 	emitData(roomId, toSendData, true);
 
@@ -279,6 +292,17 @@ const playerReady = (socketId) => {
 				{ event: "playerReady", players: [...room.players].reverse() },
 			];
 			emitData(room.id, toSendData, true);
+		}
+	}
+};
+
+const playerMove = (socketId, data) => {
+	const player = players[socketId];
+	const room = rooms[player.roomId];
+	if (player && room) {
+		if (room.isValidMove(socketId)) {
+			room.setPlayerMove(socketId, data);
+			// console.log("player piece moved");
 		}
 	}
 };
@@ -695,6 +719,11 @@ io.on("connection", (socket) => {
 			case "playerReady":
 				playerReady(socket.id);
 				break;
+			case "playerPieceMove":
+				const { action, ...rest } = data;
+				playerMove(socket.id, { ...rest });
+				break;
+			default:
 		}
 	});
 	//spectate game room
