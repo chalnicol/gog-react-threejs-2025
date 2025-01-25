@@ -89,16 +89,14 @@ const initGame = (roomId) => {
 		{
 			event: "initGame",
 			players: room.getPlayers(),
-			playerPieces: room.getPieces(),
+			playerPieces: room.getPieces(true, 0),
 		},
 		{
 			event: "initGame",
 			players: room.getPlayers(1),
-			playerPieces: room.getPieces(1),
+			playerPieces: room.getPieces(false, 1),
 		},
 	];
-
-	// console.log(room.getPieces(0));
 
 	emitData(roomId, toSendData, true);
 };
@@ -145,32 +143,66 @@ const startClock = (roomId) => {
 
 const endPrep = (roomId) => {
 	//..
-
-	clearInterval(timers[roomId]);
-
 	const room = rooms[roomId];
 	room.setBothPlayersReady();
 
+	if (room.type === "blitz") {
+		clearInterval(timers[roomId]);
+	}
 	const toSendData = [
-		{ event: "endPrep", players: room.players },
-		{ event: "endPrep", players: [...room.players].reverse() },
+		{
+			event: "endPrep",
+			players: room.players,
+			oppoPieces: room.getPieces(true, 1),
+		},
+		{
+			event: "endPrep",
+			players: [...room.players].reverse(),
+			oppoPieces: room.getPieces(false, 0),
+		},
 	];
 
-	// console.log(room.pieces.filter((p) => p.playerIndex === 0));
+	// console.log(room.pieces);
 
 	emitData(roomId, toSendData, true);
 
-	timers[roomId] = setTimeout(() => startGame(), 2000);
+	timers[roomId] = setTimeout(() => startGame(roomId), 3000);
+
+	console.log(`Game: ${roomId} preparations has ended.`);
 };
 
 const startGame = (roomId) => {
-	const room = rooms[roomId];
+	const room = rooms[roomId] || null;
 
-	if (room) {
-		room.startGame();
-		if (room.type === "blitz") {
-			startClock(roomId);
-		}
+	if (!room) return;
+
+	room.startGame();
+	if (room.type === "blitz") {
+		startClock(roomId);
+	}
+
+	const toSendData = [
+		{
+			event: "startGame",
+			clock: room.turnTime,
+			isTurn: room.isPlayerTurn(),
+		},
+		{
+			event: "startGame",
+			clock: room.turnTime,
+			isTurn: room.isPlayerTurn(1),
+		},
+	];
+	emitData(roomId, toSendData, true);
+
+	console.log(`Game: ${roomId} has started.`);
+};
+
+const endGame = (roomId) => {
+	const room = rooms[roomId];
+	room.endGame();
+	if (room.type === "blitz") {
+		clearInterval(timers[roomId]);
 	}
 };
 
@@ -178,10 +210,26 @@ const switchTurn = (roomId) => {
 	const room = rooms[roomId];
 	room.switchTurn();
 
+	if (room.type === "blitz") {
+		startClock(roomId);
+	}
 	//emit..
-	emitData(roomId, { event: "switchTurn", clock: 5, turn: room.turn });
+	// console.log(room.getMovedPiece());
 
-	startClock(roomId);
+	const toSendData = [
+		{
+			event: "switchTurn",
+			isTurn: room.isPlayerTurn(),
+			movedPiece: room.getMovedPiece(0),
+		},
+		{
+			event: "switchTurn",
+			isTurn: room.isPlayerTurn(1),
+			movedPiece: room.getMovedPiece(1),
+		},
+	];
+
+	emitData(roomId, toSendData, true);
 };
 
 const emitData = (roomId, data, isSeparate = false) => {
@@ -280,10 +328,7 @@ const playerReady = (socketId) => {
 		room.setPlayerReady(socketId);
 
 		if (room.bothPlayersReady()) {
-			//..end preparation..
-			if (room.type === "blitz") {
-				clearInterval(timers[room.id]);
-			}
+			//..end preparations..
 			endPrep(room.id);
 		} else {
 			//emits players ready while waiting for other player to get ready..
@@ -299,10 +344,17 @@ const playerReady = (socketId) => {
 const playerMove = (socketId, data) => {
 	const player = players[socketId];
 	const room = rooms[player.roomId];
-	if (player && room) {
-		if (room.isValidMove(socketId)) {
-			room.setPlayerMove(socketId, data);
-			// console.log("player piece moved");
+	if (!player || !room) return;
+
+	if (room.isValidMove(socketId)) {
+		room.setPlayerMove(socketId, data);
+
+		if (room.phase !== "prep") {
+			if (!room.isFinished) {
+				switchTurn(room.id);
+			} else {
+				endGame(room.id);
+			}
 		}
 	}
 };

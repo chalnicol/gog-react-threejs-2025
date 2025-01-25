@@ -33,7 +33,7 @@ const SplashScreen = ({ onSubmit }) => {
 					<hr className="my-3 border-gray-400 shadow" />
 					<form onSubmit={handleFormSubmit} className="mt-1 px-1">
 						<span className="text-sm font-semibold">Enter Username</span>
-						<div className="flex flex-col md:flex-row gap-2 mt-1">
+						<div className="flex flex-col sm:flex-row gap-2 mt-1">
 							<input
 								type="text"
 								className="px-3 py-2 border border-gray-500 text-black rounded flex-1 focus:outline-none focus:ring-1 focus:ring-blue-500"
@@ -44,7 +44,7 @@ const SplashScreen = ({ onSubmit }) => {
 								maxLength={15}
 								autoComplete="off"
 							/>
-							<button className="w-full md:w-36 bg-blue-500 py-2 hover:bg-blue-600 text-white w-24 font-semibold rounded">
+							<button className="w-full sm:w-36 bg-blue-500 py-2 hover:bg-blue-600 text-white w-24 font-semibold rounded">
 								Enter
 							</button>
 						</div>

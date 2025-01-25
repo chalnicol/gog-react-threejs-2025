@@ -19,11 +19,14 @@ class Room {
 		this.roundsPlayed = 0;
 		this.turn = 0;
 		this.phase = "";
-		this.prepTime = type === "classic" ? 0 : 30; //seconds
-		this.turnTime = type === "classic" ? 0 : 45;
+		this.prepTime = type === "classic" ? 0 : 5; //seconds
+		this.turnTime = type === "classic" ? 0 : 10;
 		this.timer = null;
 		this.pieces = [];
 		this.grid = [];
+		this.isFinished = false;
+		this.movedPiece = null;
+		this.capturePieces = [];
 
 		//add host to players..
 		this.addPlayer(hostData);
@@ -33,19 +36,37 @@ class Room {
 		return index === 0 ? this.players : [...this.players].reverse();
 	}
 
-	getPieces(index = 0) {
+	isPlayerTurn(playerIndex = 0) {
+		return this.players[playerIndex].turn === this.turn;
+	}
+
+	getMovedPiece(index) {
+		const base = { ...this.movedPiece };
+
+		if (index === 0) {
+			base.row = 7 - base.row;
+			base.col = 8 - base.col;
+		}
+
+		base.pieceIndex =
+			index !== base.playerIndex ? base.pieceIndex + 21 : base.pieceIndex;
+
+		return base;
+	}
+
+	getPieces(mirrored, playerIndex) {
 		const mirrorPosition = (row, col) => ({ row: 7 - row, col: 8 - col });
 
-		return index === 0
+		return mirrored
 			? this.pieces
-					.filter((piece) => piece.playerIndex === 0)
+					.filter((piece) => piece.playerIndex === playerIndex)
 					.map(({ row, col, color, rank }) => ({
 						...mirrorPosition(row, col),
 						color,
 						rank,
 					}))
 			: this.pieces
-					.filter((piece) => piece.playerIndex === 1)
+					.filter((piece) => piece.playerIndex === playerIndex)
 					.map(({ row, col, color, rank }) => ({
 						row,
 						col,
@@ -84,24 +105,21 @@ class Room {
 		for (let i = 0; i < 21; i++) {
 			const row = Math.floor(i / 9);
 			const col = i % 9;
+
+			const newRow = playerIndex === 1 ? 5 + row : 2 - row;
+			const newCol = playerIndex === 1 ? col : 8 - col;
 			const piece = {
 				index: playerIndex == 1 ? i + 21 : i,
-				row: playerIndex === 1 ? 5 + row : 2 - row,
-				// col: playerIndex === 1 ? col : 8 - col,
-				col: col,
+				row: newRow,
+				col: newCol,
 				color: this.players[playerIndex].turn,
 				rank: ranks[i],
 				playerIndex: playerIndex,
 			};
 			this.pieces.push(piece);
 			// this.grid[row * 9 + col].pieceIndex = piece.index;
-			this.grid[row][col].pieceIndex = piece.index;
+			this.grid[newRow][newCol].pieceIndex = piece.index;
 		}
-	}
-
-	generateAiPiecesPosition() {
-		this.clearGrid(1);
-		this.generateRandomPiecesPosition(1);
 	}
 
 	generateRandomPiecesPosition(playerIndex) {
@@ -136,14 +154,6 @@ class Room {
 		return array.sort(() => Math.random() - 0.5);
 	}
 
-	playerMove(playerIndex, pieceRankValue, pieceColor) {
-		this.grid[row][col] = {
-			index: playerIndex,
-			value: pieceRankValue,
-			color: pieceColor,
-		};
-	}
-
 	isValidMove(socketId) {
 		const player =
 			this.players.find((plyr) => plyr.socketId === socketId) || null;
@@ -156,43 +166,25 @@ class Room {
 	}
 
 	startPrep() {
-		this.turn = 0;
 		this.phase = "prep";
 	}
 
-	startClock(maxSeconds) {
-		// let tick = 0;
-		// this.timer = setInterval(() => {
-		// 	tick++;
-		// 	//..emit
-		// 	this.emitData({ event: "clockTick", clock: maxSeconds - tick });
-		// 	//stop timer if..
-		// 	if (tick >= maxSeconds) {
-		// 		// this.endClock();
-		// 		clearInterval(this.timer);
-		// 		this.switchTurn();
-		// 	}
-		// }, 1000);
-		// this.timer = setTimeout(() => this.switchTurn(), maxSeconds * 1000);
-		// this.timer = setInterval(() => {
-		// 	this.eventCallback({ event: "clockTick", clock: 30 });
-		// }, 1000);
-	}
-
-	endClock() {
-		if (this.phase === "prep") {
-			this.startGame();
-		} else {
-			this.endGame();
+	endPrep() {
+		if (this.vsAi) {
+			this.clearGrid(1);
+			this.generateRandomPiecesPosition(1);
 		}
 	}
 
 	startGame() {
 		//..
+		this.phase = "main";
+		this.turn = 0;
 	}
 
 	endGame() {
 		//..
+		this.isFinished = true;
 	}
 
 	addRound() {
@@ -205,7 +197,8 @@ class Room {
 
 	setPlayersTurn() {
 		if (this.roundsPlayed == 0) {
-			const randomTurn = Math.floor(Math.random() * 2);
+			// const randomTurn = Math.floor(Math.random() * 2);
+			const randomTurn = 0;
 			this.players[0].turn = randomTurn;
 			this.players[1].turn = randomTurn === 0 ? 1 : 0;
 		} else {
@@ -272,12 +265,15 @@ class Room {
 	getPlayerIndex(socketId) {
 		return this.players.findIndex((player) => player.socketId === socketId);
 	}
+
 	setPlayerMove(socketId, data) {
 		const { row, col, pieceIndex } = data;
 		const playerIndex = this.getPlayerIndex(socketId);
+
 		if (playerIndex !== -1) {
+			//.
 			const newRow = playerIndex == 0 ? 7 - row : row;
-			const newCol = playerIndex == 0 ? 8 - col : row;
+			const newCol = playerIndex == 0 ? 8 - col : col;
 			const newPieceIndex = playerIndex == 0 ? pieceIndex : 21 + pieceIndex;
 
 			const toMoveRow = this.pieces[newPieceIndex].row;
@@ -289,10 +285,11 @@ class Room {
 				this.pieces[newPieceIndex].col = newCol;
 
 				this.grid[toMoveRow][toMoveCol].pieceIndex = null;
+
+				console.log("empty");
 			} else {
 				if (this.phase == "prep") {
 					//get current piece data of the piece to move..
-
 					const residingPieceIndex = this.grid[newRow][newCol].pieceIndex;
 
 					this.grid[toMoveRow][toMoveCol].pieceIndex = residingPieceIndex;
@@ -307,6 +304,13 @@ class Room {
 					//TODO...
 				}
 			}
+
+			this.movedPiece = {
+				playerIndex: playerIndex,
+				pieceIndex: pieceIndex,
+				row: newRow,
+				col: newCol,
+			};
 		} else {
 			console.log("player not found..");
 		}

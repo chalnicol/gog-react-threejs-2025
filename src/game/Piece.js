@@ -90,6 +90,9 @@ class Piece {
 
 	// Set position of the square
 	updatePosition(row, col, jump = false) {
+		const disX = Math.abs(this.row - row);
+		const disZ = Math.abs(this.col - col);
+		const duration = disX > 4 || disZ > 4 ? 1.5 : 0.8;
 		this.row = row;
 		this.col = col;
 		this.tileIndex = row * 9 + col;
@@ -102,14 +105,14 @@ class Piece {
 			x: xpos,
 			y: 0.06,
 			z: ypos,
-			ease: "elastic.out(1, 0.6)",
-			duration: 0.8,
+			ease: "power4.out",
+			duration: duration,
 		});
 
 		gsap.to(this.mesh.position, {
 			y: 1, // Jump up
-			duration: 0.14, // Quick jump up
-			ease: "power2.out",
+			duration: disX > 4 || disZ > 4 ? 0.3 : 0.15, // Quick jump up
+			ease: "power4.out",
 			onComplete: () => {
 				gsap.to(this.mesh.position, {
 					y: 0.06, // Return to the original position

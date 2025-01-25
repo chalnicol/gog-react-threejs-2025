@@ -15,7 +15,7 @@ const QuickPlay = ({ onQuickPlay }) => {
 			<h1 className="font-semibold text-lg px-1">Quick Play</h1>
 			<hr className="border-0 border-b border-gray-400 shadow-lg my-1" />
 
-			<div className="flex flex-col lg:flex-row gap-x-5 gap-y-2 mt-3">
+			<div className="flex flex-col sm:flex-row gap-x-5 gap-y-2 mt-3">
 				<div className="flex-1">
 					<span className="text-sm text-gray-600 font-medium">
 						Select Type
@@ -77,7 +77,7 @@ const QuickPlay = ({ onQuickPlay }) => {
 			</div>
 
 			<button
-				className="w-full text-white md:w-40 rounded hover:bg-blue-500 bg-blue-600 mt-4 font-bold active:scale-95 py-2 border border"
+				className="w-full text-white sm:w-40 rounded hover:bg-blue-500 bg-blue-600 mt-4 font-bold active:scale-95 py-2 border border"
 				onClick={handleSelectGame}
 			>
 				PLAY

@@ -20,7 +20,7 @@ const GameInterface = ({
 	phase,
 	message,
 	clock,
-	turn,
+	isPlayerTurn,
 	onGameAction,
 }) => {
 	const [gameMenuShown, setGameMenuShown] = useState(false);
@@ -29,6 +29,7 @@ const GameInterface = ({
 	useEffect(() => {
 		setTimeout(() => setGameMenuShown(true), 1000);
 	}, []);
+
 	useEffect(() => {
 		if (message !== "") {
 			setShowMessage(true);
@@ -90,26 +91,24 @@ const GameInterface = ({
 	return (
 		<>
 			{/* player indicator */}
-			<div className="absolute bg-gray-600 h-32 md:h-12 w-full rounded top-0">
+			<div className="absolute bg-gray-600 h-32 sm:h-12 w-full top-0">
 				{players && players.length > 0 && (
-					<div className="flex flex-col md:flex-row gap-y-2 justify-center items-center gap-x-2 px-4 absolute h-full w-full  font-semibold">
+					<div className="flex flex-col sm:flex-row gap-y-2 justify-center items-center gap-x-2 px-4 absolute h-full w-full  font-semibold">
 						<PlayerIndicator
-							className={`${turn === 0 ? "bg-green-200" : "bg-white"}`}
 							clock={clock}
 							username={players[0].username}
-							turn={turn}
+							isTurn={isPlayerTurn}
 							index={0}
 							phase={phase}
 							isReady={players[0].isReady}
 						/>
-						<div className="absolute md:relative font-bold text-white h-10 md:h-2/3 aspect-square border border-red-500 bg-red-600 flex items-center justify-center rounded-full">
+						<div className="absolute sm:relative font-bold text-white h-10 sm:h-2/3 aspect-square border border-red-500 bg-red-600 flex items-center justify-center rounded-full">
 							VS
 						</div>
 						<PlayerIndicator
-							className={`${turn === 1 ? "bg-green-200" : "bg-white"}`}
 							clock={clock}
 							username={players[1].username}
-							turn={turn}
+							isTurn={!isPlayerTurn}
 							index={1}
 							phase={phase}
 							isReady={players[1].isReady}
@@ -122,56 +121,61 @@ const GameInterface = ({
 			{gameMenuShown && (
 				<div
 					ref={controlsRef}
-					className="absolute bottom-14 right-0 bg-gray-200 rounded-t w-16 h-3/5 md:h-[calc(100vh-7rem)] max-h-[400px] overflow-hidden flex flex-col"
+					className="absolute bottom-14 right-0 bg-gray-200 rounded-t w-20 h-3/5 md:h-[calc(100vh-7rem)] max-h-[400px] overflow-hidden"
 				>
-					<button
-						className={`w-full aspect-square border text-lg border-gray-400 leading-5  ${
-							isReadyButtonDisabled ? "" : "hover:bg-teal-100"
-						}`}
-						onClick={() => handleControlsClick("playerReady")}
-						disabled={isReadyButtonDisabled}
-					>
-						<FontAwesomeIcon
-							icon={faCircleCheck}
-							className={`${
-								isReadyButtonDisabled
-									? "text-gray-500"
-									: "text-green-500"
-							}`}
-						/>
-						<br />
-						<span className="text-sm font-semibold">Ready</span>
-					</button>
-
-					{phase == "main" && (
+					<div className="text-center font-bold bg-amber-500 text-white text-xs py-1 select-none">
+						Controls
+					</div>
+					<div className="w-full">
 						<button
-							className="w-full aspect-square border text-lg border-gray-400 leading-5 hover:bg-teal-100 "
-							onClick={() => handleControlsClick("playerSurrender")}
+							className={`w-full aspect-square border text-lg border-gray-400 leading-5  ${
+								isReadyButtonDisabled ? "" : "hover:bg-teal-100"
+							}`}
+							onClick={() => handleControlsClick("playerReady")}
+							disabled={isReadyButtonDisabled}
 						>
 							<FontAwesomeIcon
-								icon={faFlag}
-								className="text-green-600"
+								icon={faCircleCheck}
+								className={`${
+									isReadyButtonDisabled
+										? "text-gray-500"
+										: "text-green-500"
+								}`}
 							/>
 							<br />
-							<span className="text-sm font-semibold">Surrender</span>
+							<span className="text-sm font-semibold">Ready</span>
 						</button>
-					)}
 
-					<button
-						className="w-full aspect-square border text-lg  border-gray-400 leading-5 hover:bg-teal-100"
-						onClick={() => handleControlsClick("leaveGame")}
-					>
-						<FontAwesomeIcon
-							className="text-red-600"
-							icon={faCircleXmark}
-						/>
-						<br />
-						<span className="text-sm font-semibold">Leave</span>
-					</button>
+						{phase == "main" && (
+							<button
+								className="w-full aspect-square border text-lg border-gray-400 leading-5 hover:bg-teal-100 "
+								onClick={() => handleControlsClick("playerSurrender")}
+							>
+								<FontAwesomeIcon
+									icon={faFlag}
+									className="text-green-600"
+								/>
+								<br />
+								<span className="text-sm font-semibold">Surrender</span>
+							</button>
+						)}
+
+						<button
+							className="w-full aspect-square border text-lg  border-gray-400 leading-5 hover:bg-teal-100"
+							onClick={() => handleControlsClick("leaveGame")}
+						>
+							<FontAwesomeIcon
+								className="text-red-600"
+								icon={faCircleXmark}
+							/>
+							<br />
+							<span className="text-sm font-semibold">Leave</span>
+						</button>
+					</div>
 				</div>
 			)}
 			<button
-				className="text-white text-2xl rounded-tl-lg bg-amber-500 absolute bottom-0 right-0 w-16 aspect-square"
+				className="text-white text-2xl rounded-tl-lg bg-amber-500 absolute bottom-0 right-0 w-20 aspect-square"
 				onClick={handleGameMenuClick}
 			>
 				<FontAwesomeIcon icon={gameMenuShown ? faXmark : faGear} />

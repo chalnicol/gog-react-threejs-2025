@@ -7,7 +7,7 @@ const GameComponent = ({ gameUpdates, onGameAction }) => {
 	//
 	const [players, setPlayers] = useState([]);
 	const [clock, setClock] = useState(null);
-	const [turn, setTurn] = useState(null);
+	const [isPlayerTurn, setIsPlayerTurn] = useState(false);
 	const [phase, setPhase] = useState("");
 	const [message, setMessage] = useState("");
 
@@ -34,25 +34,23 @@ const GameComponent = ({ gameUpdates, onGameAction }) => {
 						gameInitedRef.current = true;
 
 						//animate game container..
-						const { players, playerPieces } = gameUpdates;
-
-						setPlayers(players);
+						setPlayers(gameUpdates.players);
 
 						//initialize three js..
 						gameRef.current = new ThreeJSGame(
 							containerRef.current.id,
 							onGameAction
 						);
-						gameRef.current.init(playerPieces);
-						// console.log("initializing game", players[0].pieceColor);
+						gameRef.current.init(gameUpdates.playerPieces);
+						//..
+						console.log("initializing game");
 					}
 					break;
 				case "startPrep":
-					setTurn(gameUpdates.turn);
 					setClock(gameUpdates.clock);
 					setPhase("prep");
 					setMessage(
-						"Prepare your ranks. Click on a piece to move it or swap its position by clicking on another piece. Hit 'Ready' when finished."
+						"Prepare your ranks. Click on a piece to move it or swap its position by clicking on another piece or tile. Hit 'Ready' when finished."
 					);
 
 					gameRef.current.setPlayerPiecesEnabled();
@@ -63,27 +61,38 @@ const GameComponent = ({ gameUpdates, onGameAction }) => {
 					setClock(gameUpdates.clock);
 					// console.log("clock tick..", gameUpdates.clock);
 					break;
-				case "switchTurn":
-					setTurn(gameUpdates.turn);
-					setClock(gameUpdates.clock);
-					console.log("switching turn..", gameUpdates.turn);
-					break;
 				case "playerLeave":
 					setMessage(`${gameUpdates.username} has left the game.`);
 					console.log("player leave", gameUpdates.username);
 					break;
 				case "endPrep":
+					const { players, oppoPieces } = gameUpdates;
+
 					setMessage("Game commencing.. Ready to play!");
-					setPhase("");
-					setPlayers(gameUpdates.players);
-					gameRef.current.endPrep();
+					setPlayers(players);
+					gameRef.current.endPrep(oppoPieces);
+					console.log(oppoPieces);
 					break;
 				case "playerReady":
 					setPlayers(gameUpdates.players);
 					break;
 				case "startGame":
 					setPhase("main");
-					setTurn(0);
+					setClock(gameUpdates.clock);
+					setIsPlayerTurn(gameUpdates.isTurn);
+					setMessage("Let's go!");
+					//set enabled if player's turn
+					gameRef.current.setPhase("main");
+					gameRef.current.setPlayerPiecesEnabled(gameUpdates.isTurn);
+					break;
+					break;
+				case "switchTurn":
+					setIsPlayerTurn(gameUpdates.isTurn);
+					setClock(clock);
+					gameRef.current.movePieceUpdate(gameUpdates.movedPiece);
+					gameRef.current.setPlayerPiecesEnabled(gameUpdates.isTurn);
+
+					// console.log("switching turn..", gameUpdates.movedPiece);
 					break;
 				default:
 				//..
@@ -112,7 +121,7 @@ const GameComponent = ({ gameUpdates, onGameAction }) => {
 
 			<GameInterface
 				players={players}
-				turn={turn}
+				isPlayerTurn={isPlayerTurn}
 				clock={clock}
 				message={message}
 				phase={phase}

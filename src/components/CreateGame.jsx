@@ -41,7 +41,7 @@ const CreateGame = ({ reset, errors, onCreateGame }) => {
 			<h1 className="font-semibold text-lg px-1">Create Game</h1>
 			<hr className="border-0 border-b border-gray-400 shadow-lg my-1" />
 
-			<div className="flex flex-col lg:flex-row gap-x-3 gap-y-2 mt-3">
+			<div className="flex flex-col sm:flex-row gap-x-3 gap-y-2 mt-3">
 				<div className="flex-1">
 					<span className="text-sm text-gray-600 font-medium">
 						Select Type
@@ -103,7 +103,7 @@ const CreateGame = ({ reset, errors, onCreateGame }) => {
 				</div>
 			</div>
 
-			<div className="flex flex-col lg:flex-row gap-x-3 gap-y-2 mt-3">
+			<div className="flex flex-col sm:flex-row gap-x-3 gap-y-2 mt-3">
 				{/* <div className="flex-1">
 					<span className="text-sm text-gray-600 font-medium">
 						Set Game Password (Optional)
@@ -181,7 +181,7 @@ const CreateGame = ({ reset, errors, onCreateGame }) => {
 			</div>
 
 			<button
-				className="w-full text-white md:w-40 rounded hover:bg-blue-500 font-bold bg-blue-600 mt-4 py-2 border border active:scale-95"
+				className="w-full text-white sm:w-40 rounded hover:bg-blue-500 font-bold bg-blue-600 mt-4 py-2 border border active:scale-95"
 				onClick={handleCreateGame}
 			>
 				CREATE
