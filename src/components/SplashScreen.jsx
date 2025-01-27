@@ -28,7 +28,8 @@ const SplashScreen = ({ onSubmit }) => {
 						Version 0.0.1
 					</p> */}
 					<p className="text-xs text-center text-gray-700 py-1 mt-1 font-semibold">
-						Powered by ReactJS, ThreeJS, NodeJS, Tailwind CSS and SocketIO
+						Powered by ReactJS, ThreeJS, NodeJS, Tailwind CSS, GSAP and
+						SocketIO
 					</p>
 					<hr className="my-3 border-gray-400 shadow" />
 					<form onSubmit={handleFormSubmit} className="mt-1 px-1">
@@ -44,8 +45,8 @@ const SplashScreen = ({ onSubmit }) => {
 								maxLength={15}
 								autoComplete="off"
 							/>
-							<button className="w-full sm:w-36 bg-blue-500 py-2 hover:bg-blue-600 text-white w-24 font-semibold rounded">
-								Enter
+							<button className="w-full sm:w-36 bg-blue-500 py-2 hover:bg-blue-600 text-white w-24 font-bold rounded">
+								ENTER
 							</button>
 						</div>
 						{error && (

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faXmark, faCheck } from "@fortawesome/free-solid-svg-icons";
 
@@ -6,6 +6,13 @@ const RoomsTable = ({ rooms, socketId, onActionClick }) => {
 	const isInTheRoom = (room, sid) => {
 		return room.players.some((player) => player.socketId === sid);
 	};
+
+	const isInAGame = useMemo(() => {
+		const playerIndex = rooms.findIndex((room) =>
+			room.players.some((player) => player.socketId === socketId)
+		);
+		return playerIndex !== -1;
+	}, [rooms, socketId]);
 
 	const renderRoomActionButton = (room, socketId) => {
 		const renderButton = (label, color, action) => (
@@ -17,7 +24,7 @@ const RoomsTable = ({ rooms, socketId, onActionClick }) => {
 			</button>
 		);
 		if (room.status === "open") {
-			if (isInTheRoom(room, socketId) && room.privateMatch) {
+			if (isInTheRoom(room, socketId) && room.isPrivate) {
 				if (room.playerInvitedId) {
 					return renderButton("Delete", "bg-red-500", "deleteRoom");
 				} else {
@@ -32,18 +39,18 @@ const RoomsTable = ({ rooms, socketId, onActionClick }) => {
 						</div>
 					);
 				}
-			} else if (isInTheRoom(room, socketId) && !room.privateMatch) {
+			} else if (isInTheRoom(room, socketId) && !room.isPrivate) {
 				return renderButton("Delete", "bg-red-500", "deleteRoom");
-			} else if (!isInTheRoom(room, socketId) && !room.privateMatch) {
+			} else if (!isInAGame && !room.isPrivate) {
 				return renderButton("Join", "bg-blue-500", "joinRoom");
 			}
 		}
 
-		if (room.status === "closed") {
-			if (room.allowSpectators && !isInTheRoom(room, socketId)) {
-				return renderButton("Spectate", "bg-orange-500", "spectateRoom");
-			}
-		}
+		// if (room.status === "closed") {
+		// 	if (room.allowSpectators && !isInTheRoom(room, socketId)) {
+		// 		return renderButton("Spectate", "bg-orange-500", "spectateRoom");
+		// 	}
+		// }
 
 		// Default fallback
 		return <span>--</span>;
@@ -77,7 +84,7 @@ const RoomsTable = ({ rooms, socketId, onActionClick }) => {
 							{room.players[0].username}
 						</td>
 						<td className="p-2 text-sm">
-							{room.privateMatch ? (
+							{room.isPrivate ? (
 								<span>Private Match</span>
 							) : (
 								<span>Free Play</span>

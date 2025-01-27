@@ -11,7 +11,7 @@ const CreateGame = ({ reset, errors, onCreateGame }) => {
 	const handleCreateGame = () => {
 		onCreateGame({
 			type: gameType,
-			privateGame: privateGame,
+			isPrivate: privateGame,
 			playerInvited: playerInvited,
 			allowSpectators: allowSpectators,
 		});

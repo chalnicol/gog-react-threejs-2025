@@ -10,6 +10,7 @@ class Tile {
 		this.isEnabled = false;
 		// this.isResided = false;
 		this.pieceIndex = null;
+		this.playerIndex = null;
 		this.mesh = this.createMesh();
 		this.blinkAnim = null;
 	}
@@ -41,7 +42,7 @@ class Tile {
 
 		const clr = this.color === "blue" ? 0x0000ff : 0xff0000;
 
-		const blinkColor = this.color === "blue" ? 0x8080ff : 0xff6666;
+		const blinkColor = this.color === "blue" ? 0x4d4dff : 0xff6666;
 
 		this.mesh.children[1].material.color.set(blinkColor);
 
@@ -58,6 +59,15 @@ class Tile {
 		const clr = this.color === "blue" ? 0x0000ff : 0xff0000;
 		this.mesh.children[1].material.color.set(clr);
 		this.isEnabled = false;
+	}
+
+	setIndexes(playerIndex, pieceIndex) {
+		this.pieceIndex = pieceIndex;
+		this.playerIndex = playerIndex;
+	}
+	clearIndexes() {
+		this.pieceIndex = null;
+		this.playerIndex = null;
 	}
 }
 

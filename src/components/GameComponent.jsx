@@ -15,17 +15,6 @@ const GameComponent = ({ gameUpdates, onGameAction }) => {
 	const containerRef = useRef(null);
 	const gameInitedRef = useRef(false);
 
-	const initThreeJSGame = () => {
-		if (containerRef.current) {
-			const threeJSGame = new ThreeJSGame(
-				containerRef.current.id,
-				onGameAction
-			);
-			threeJSGame.init();
-			gameRef.current = threeJSGame;
-		}
-	};
-
 	useEffect(() => {
 		if (gameUpdates) {
 			switch (gameUpdates.event) {
@@ -37,11 +26,17 @@ const GameComponent = ({ gameUpdates, onGameAction }) => {
 						setPlayers(gameUpdates.players);
 
 						//initialize three js..
-						gameRef.current = new ThreeJSGame(
-							containerRef.current.id,
-							onGameAction
+
+						const threeJSGame = new ThreeJSGame(containerRef.current.id);
+						threeJSGame.init(
+							gameUpdates.fieldColor,
+							gameUpdates.playerPieces
 						);
-						gameRef.current.init(gameUpdates.playerPieces);
+						threeJSGame.on("sendAction", (data) => {
+							onGameAction(data);
+						});
+						gameRef.current = threeJSGame;
+
 						//..
 						console.log("initializing game");
 					}
@@ -71,7 +66,7 @@ const GameComponent = ({ gameUpdates, onGameAction }) => {
 					setMessage("Game commencing.. Ready to play!");
 					setPlayers(players);
 					gameRef.current.endPrep(oppoPieces);
-					console.log(oppoPieces);
+					// console.log(oppoPieces);
 					break;
 				case "playerReady":
 					setPlayers(gameUpdates.players);
@@ -89,10 +84,9 @@ const GameComponent = ({ gameUpdates, onGameAction }) => {
 				case "switchTurn":
 					setIsPlayerTurn(gameUpdates.isTurn);
 					setClock(clock);
-					gameRef.current.movePieceUpdate(gameUpdates.movedPiece);
+					gameRef.current.movePieceUpdate(gameUpdates.move);
 					gameRef.current.setPlayerPiecesEnabled(gameUpdates.isTurn);
-
-					// console.log("switching turn..", gameUpdates.movedPiece);
+					// console.log("move", gameUpdates.move);
 					break;
 				default:
 				//..

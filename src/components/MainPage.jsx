@@ -38,6 +38,8 @@ const MainPage = ({ playerName }) => {
 	const chatIndexRef = useRef(null);
 	const sidebarRef = useRef(null);
 
+	const socketRef = useRef(null);
+
 	useEffect(() => {
 		const socketInstance = io("http://localhost:3000");
 		setSocket(socketInstance);
@@ -111,7 +113,7 @@ const MainPage = ({ playerName }) => {
 			}
 		};
 		window.addEventListener("resize", handleResize);
-
+		console.log("io inited..");
 		// Cleanup event listener
 		return () => {
 			window.removeEventListener("resize", handleResize);
@@ -462,15 +464,16 @@ const MainPage = ({ playerName }) => {
 								<div className="w-11/12 max-w-5xl bg-white shadow-lg p-4 mt-6 rounded mx-auto border border-gray-400">
 									<div className="flex items-center">
 										<h1 className="font-semibold text-lg ">Games</h1>
-										<button className="ms-auto text-xs px-3 py-0.5 bg-sky-700 hover:bg-sky-600 rounded font-semibold text-white">
+										{/* <button className="ms-auto text-xs px-3 py-0.5 bg-sky-700 hover:bg-sky-600 rounded font-semibold text-white">
 											Refresh
-										</button>
+										</button> */}
 									</div>
 
 									<div className="mt-2 overflow-x-auto">
 										{roomsData.length > 0 ? (
 											<RoomsTable
 												rooms={roomsData}
+												user={userData}
 												socketId={userData.socketId}
 												onActionClick={handleRoomsTableActionClick}
 											/>

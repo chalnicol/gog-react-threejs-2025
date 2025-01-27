@@ -12,9 +12,9 @@ const FlashMessage = ({ status, onClose }) => {
 	useEffect(() => {
 		if (status !== null) {
 			clearTimeout(timerRef.current);
-			timerRef.current = setTimeout(() => {
-				onClose();
-			}, 3000);
+			// timerRef.current = setTimeout(() => {
+			// 	onClose();
+			// }, 3000);
 		} else {
 			clearTimeout(timerRef.current);
 			timerRef.current = null;
@@ -23,7 +23,7 @@ const FlashMessage = ({ status, onClose }) => {
 	return (
 		<>
 			{status?.success && (
-				<div className="text-white px-3 mt-3 py-2 bg-green-500 rounded gap-x-2 font-medium border-2 border-green-400 flex items-center">
+				<div className="px-3 mt-3 py-2 bg-green-300 rounded text-green-800 shadow gap-x-2 font-medium border-2 border-green-400 flex items-center">
 					<FontAwesomeIcon icon={faCircleCheck} /> {status.success}
 					<button
 						className="font-bold ms-auto text-xs hover:bg-green-400 px-1"
@@ -34,7 +34,7 @@ const FlashMessage = ({ status, onClose }) => {
 				</div>
 			)}
 			{status?.error && (
-				<div className="text-white px-3 mt-3 py-2 bg-red-500 rounded gap-x-2 font-medium border-2 border-red-400 flex items-center">
+				<div className="text-red-800 px-3 mt-3 py-2 bg-red-300 rounded gap-x-2 font-medium border-2 border-red-400 flex items-center">
 					<FontAwesomeIcon icon={faTriangleExclamation} /> {status.error}
 					<button
 						className="font-bold ms-auto text-xs hover:bg-red-400 px-1"

@@ -12,7 +12,7 @@ const PlayerIndicator = ({
 	const bgText = useMemo(() => {
 		if (phase === "main") {
 			return isTurn
-				? "bg-green-300 text-green-900"
+				? "bg-green-300 text-black"
 				: "bg-gray-200 text-gray-600";
 		}
 		return "bg-white";

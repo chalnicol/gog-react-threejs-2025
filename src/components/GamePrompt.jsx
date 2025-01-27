@@ -9,7 +9,7 @@ const GamePrompt = ({ message, isAutoClose = true, onClose }) => {
 	const timerRef = useRef(false);
 
 	const openAnimation = () => {
-		console.log("open animation..");
+		// console.log("open animation..");
 		gsap.fromTo(
 			promptRef.current,
 			{ scale: 0 },
@@ -49,13 +49,13 @@ const GamePrompt = ({ message, isAutoClose = true, onClose }) => {
 		<>
 			<div
 				ref={promptRef}
-				className="scale-0 absolute flex items-center w-11/12 max-w-xl left-[50%] translate-x-[-50%] bg-yellow-100 border-2 border-yellow-300 text-gray-800 top-36 sm:top-16 px-4 py-2 rounded-lg"
+				className="scale-0 absolute flex items-center w-11/12 max-w-xl left-[50%] translate-x-[-50%] bg-yellow-100 border-2 border-yellow-300 text-green-900 top-36 sm:top-16 px-4 py-2 rounded-lg"
 			>
 				<FontAwesomeIcon icon={faCircleInfo} />
 
 				<span className="ms-3 font-semibold leading-5 me-5">{message}</span>
 				<button
-					className="ms-auto text-sm hover:text-red-500 font-semibold px-1"
+					className="ms-auto text-sm hover:text-yellow-800 hover:bg-yellow-200 font-semibold px-1"
 					onClick={handleClose}
 				>
 					<FontAwesomeIcon icon={faXmark} />

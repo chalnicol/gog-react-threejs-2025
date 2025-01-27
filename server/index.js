@@ -5,7 +5,6 @@ import path, { join } from "path";
 import { fileURLToPath } from "url";
 import Player from "./Player.js";
 import Room from "./Room.js";
-import { create } from "domain";
 
 // Create Express and HTTP server
 const app = express();
@@ -50,31 +49,27 @@ const getPlayer = (id) => {
 
 const joinRoom = (roomId, socketId) => {
 	//get room
-	const room = rooms[roomId];
+	const room = rooms[roomId] || null;
 	//get player..
-	const player = players[socketId];
+	const player = players[socketId] || null;
 
-	if (room && player) {
-		//set player id..
-		player.joinRoom(room.id);
+	if (!player || !room) return;
 
-		//set host status..
-		const host = players[room.players[0].socketId];
-		host.setStatus("playing");
+	//set player id..
+	player.joinRoom(room.id);
 
-		//add player to the room players list..
-		room.addPlayer({
-			username: player.username,
-			socketId: socketId,
-			isAi: false,
-		});
+	//set host status..
+	const host = players[room.players[0].socketId];
+	host.setStatus("playing");
 
-		//initialize game..
-		// room.initGame();
-		initGame(room.id);
+	//add player to the room players list..
+	room.addPlayer(player);
 
-		console.log(`${player.username} has joined a room. Game ID : ${roomId}`);
-	}
+	//initialize game..
+	// room.initGame();
+	initGame(room.id);
+
+	console.log(`${player.username} has joined a room. Game ID : ${roomId}`);
 };
 
 const initGame = (roomId) => {
@@ -85,18 +80,18 @@ const initGame = (roomId) => {
 	timers[roomId] = setTimeout(() => startPrep(roomId), 2000);
 
 	//emit..
-	const toSendData = [
-		{
+
+	let toSendData = [];
+
+	room.players.forEach((player, i) => {
+		const mirrored = i == 0 ? true : false;
+		toSendData.push({
 			event: "initGame",
-			players: room.getPlayers(),
-			playerPieces: room.getPieces(true, 0),
-		},
-		{
-			event: "initGame",
-			players: room.getPlayers(1),
-			playerPieces: room.getPieces(false, 1),
-		},
-	];
+			players: room.getPlayers(i),
+			fieldColor: player.fieldColor,
+			playerPieces: room.getPieces(mirrored, true, i),
+		});
+	});
 
 	emitData(roomId, toSendData, true);
 };
@@ -144,29 +139,31 @@ const startClock = (roomId) => {
 const endPrep = (roomId) => {
 	//..
 	const room = rooms[roomId];
-	room.setBothPlayersReady();
+	room.endPrep();
 
 	if (room.type === "blitz") {
 		clearInterval(timers[roomId]);
 	}
+
+	// console.log(room.pieces);
+
 	const toSendData = [
 		{
 			event: "endPrep",
 			players: room.players,
-			oppoPieces: room.getPieces(true, 1),
+			oppoPieces: room.getPieces(true, false, 1),
 		},
 		{
 			event: "endPrep",
 			players: [...room.players].reverse(),
-			oppoPieces: room.getPieces(false, 0),
+			oppoPieces: room.getPieces(false, false, 0),
 		},
 	];
 
 	// console.log(room.pieces);
-
 	emitData(roomId, toSendData, true);
 
-	timers[roomId] = setTimeout(() => startGame(roomId), 3000);
+	timers[roomId] = setTimeout(() => startGame(roomId), 2000);
 
 	console.log(`Game: ${roomId} preparations has ended.`);
 };
@@ -179,6 +176,9 @@ const startGame = (roomId) => {
 	room.startGame();
 	if (room.type === "blitz") {
 		startClock(roomId);
+	}
+	if (room.vsAi && room.players[1].turn === room.turn) {
+		setTimeout(() => aiMove(roomId), 500);
 	}
 
 	const toSendData = [
@@ -213,23 +213,26 @@ const switchTurn = (roomId) => {
 	if (room.type === "blitz") {
 		startClock(roomId);
 	}
-	//emit..
-	// console.log(room.getMovedPiece());
+	if (room.vsAi && room.players[1].turn === room.turn) {
+		setTimeout(() => aiMove(roomId), 1500);
+	}
+	// showGrid(room.tiles);
 
 	const toSendData = [
 		{
 			event: "switchTurn",
 			isTurn: room.isPlayerTurn(),
-			movedPiece: room.getMovedPiece(0),
+			move: room.getMove(0),
 		},
 		{
 			event: "switchTurn",
 			isTurn: room.isPlayerTurn(1),
-			movedPiece: room.getMovedPiece(1),
+			move: room.getMove(1),
 		},
 	];
 
 	emitData(roomId, toSendData, true);
+	// console.log(`Game: ${roomId} switch turn.`);
 };
 
 const emitData = (roomId, data, isSeparate = false) => {
@@ -244,40 +247,42 @@ const emitData = (roomId, data, isSeparate = false) => {
 	});
 };
 
-const createRoom = (
-	socketId,
-	type,
-	playerInvited,
-	privateGame,
-	allowSpectators,
-	vsAi = false
-) => {
+const createRoom = (socketId, type, isPrivate, allowSpectators, vsAi) => {
 	const host = players[socketId];
 
-	if (host) {
-		host.setRoom(socketId);
+	if (!host) return;
 
-		const hostPlayerData = {
-			username: host.username,
-			socketId: socketId,
-			isAi: false,
-		};
-
+	if (!rooms[socketId]) {
 		const newRoom = new Room(
 			socketId,
-			hostPlayerData,
-			playerInvited,
+			host,
 			type,
-			privateGame,
+			isPrivate,
 			allowSpectators,
 			vsAi
 		);
-
 		rooms[socketId] = newRoom;
 
-		return newRoom;
+		//add events to this room..
+		host.setRoom(socketId);
+
+		if (vsAi) {
+			//create ai player..
+			const aiId = generateUniqueId();
+			const aiPlayer = new Player(
+				aiId,
+				aiId,
+				`Player${aiId.substring(0, 6)} (AI)`,
+				true
+			);
+			newRoom.addPlayer(aiPlayer);
+
+			//set host status to playing..
+			host.setStatus("playing");
+
+			console.log("Room created..");
+		}
 	}
-	return null;
 };
 
 const leaveRoom = (socketId) => {
@@ -344,19 +349,54 @@ const playerReady = (socketId) => {
 const playerMove = (socketId, data) => {
 	const player = players[socketId];
 	const room = rooms[player.roomId];
+
 	if (!player || !room) return;
 
-	if (room.isValidMove(socketId)) {
-		room.setPlayerMove(socketId, data);
+	//check move if is valid..
+	const isValidMove = room.isValidMove(socketId, data);
+	// console.log("valid", isValidMove);
 
-		if (room.phase !== "prep") {
-			if (!room.isFinished) {
-				switchTurn(room.id);
-			} else {
-				endGame(room.id);
-			}
+	if (isValidMove) {
+		room.setPlayerMove(socketId, data);
+		proceed(room.id);
+	}
+};
+
+const showGrid = (tiles) => {
+	tiles.forEach((innerTiles) => {
+		let str = "";
+		innerTiles.forEach((tile) => {
+			str += `[${tile.pieceIndex == null ? "-" : tile.playerIndex}] `;
+		});
+		console.log(str);
+	});
+};
+
+const aiMove = (roomId) => {
+	const room = rooms[roomId];
+
+	if (!room) return;
+
+	const aiMove = room.generateAIRandomMove();
+	// console.log("AI move", aiMove);
+	if (aiMove !== null) {
+		room.setAiMove(aiMove);
+		proceed(room.id);
+	}
+};
+
+const proceed = (roomId) => {
+	const room = rooms[roomId];
+	if (!room) return;
+
+	if (room.phase !== "prep") {
+		if (!room.isFinished) {
+			switchTurn(roomId);
+		} else {
+			endGame(roomId);
 		}
 	}
+	//..
 };
 
 const broadcastGameData = () => {
@@ -367,6 +407,7 @@ const broadcastGameData = () => {
 };
 
 io.on("connection", (socket) => {
+	console.log(`User connected: ${socket.id}`);
 	//user joined..
 	socket.on("join", (username) => {
 		console.log("A user connected");
@@ -382,7 +423,7 @@ io.on("connection", (socket) => {
 
 	//create game room
 	socket.on("createRoom", (roomData) => {
-		const { type, privateGame, playerInvited, allowSpectators } = roomData;
+		const { type, isPrivate, playerInvited, allowSpectators } = roomData;
 
 		const host = players[socket.id];
 
@@ -399,7 +440,7 @@ io.on("connection", (socket) => {
 		//consolidated form errors and send to client..
 		const errors = {};
 
-		if (privateGame && playerInvited === "") {
+		if (isPrivate && playerInvited === "") {
 			errors.playerInvited = "Player ID is required for private match.";
 		}
 		if (playerInvited !== "" && playerInvited === host.id) {
@@ -422,15 +463,8 @@ io.on("connection", (socket) => {
 			return;
 		}
 
-		//create the room..
-		const newRoom = createRoom(
-			socket.id,
-			type,
-			playerInvited,
-			privateGame,
-			allowSpectators,
-			false
-		);
+		//create the room and add to list..
+		createRoom(socket.id, type, isPrivate, allowSpectators, false);
 
 		//send invite if playerInvited is 	present
 		if (playerInvited !== "" && invited !== null) {
@@ -464,7 +498,7 @@ io.on("connection", (socket) => {
 
 			const messageData = {
 				sender: senderData,
-				message: `(Invite Sent. Game ID: ${newRoom.id})`,
+				message: `(Invite Sent. Game ID: ${socket.id})`,
 				type: "regular",
 				timeStamp: Date.now(),
 			};
@@ -517,6 +551,17 @@ io.on("connection", (socket) => {
 	//join room..
 	socket.on("joinRoom", (roomId) => {
 		//join player in the room..
+		const player = players[socket.id] || null;
+
+		if (!player) return;
+
+		if (player.status !== "idle") {
+			socket.emit("sendStatus", {
+				error: "You have an ongoing game request.",
+			});
+			return;
+		}
+
 		joinRoom(roomId, socket.id);
 
 		//update game info..
@@ -706,6 +751,7 @@ io.on("connection", (socket) => {
 
 	//quick play
 	socket.on("quickPlay", (data) => {
+		console.log("quick play..");
 		const { opponent, type } = data;
 
 		const player = players[socket.id];
@@ -724,33 +770,26 @@ io.on("connection", (socket) => {
 			const interval = 500;
 			let attempts = 0;
 
-			const timer = setInterval(() => {
+			timers[socket.id] = setInterval(() => {
 				const room = getAvailableRoom(type, socket.id);
 				if (room) {
 					joinRoom(room.id, socket.id);
 					broadcastGameData();
-					clearInterval(timer);
+					clearInterval(timers[socket.id]);
+					delete timers[socket.id];
 				} else if (++attempts >= maxRetries) {
 					socket.emit("quickPlayFailed", { error: "Failed to join game" });
-					clearInterval(timer);
+					clearInterval(timers[socket.id]);
+					delete timers[socket.id];
 				} else {
 					console.log(
-						`${player.username} failed to find room. Attempt ${attempts}: Retrying...`
+						`${player.username} failed to find room. Retrying...`
 					);
 				}
 			}, interval);
 		} else {
-			//init game with ai..
-			const roomWithAI = createRoom(socket.id, type, "", true, false, true);
-
-			const ai = {
-				username: `Player${generateUniqueId().substring(0, 6)} (AI)`,
-				socketId: generateUniqueId(),
-				isAi: true,
-			};
-			roomWithAI.addPlayer(ai);
-
-			player.setStatus("playing");
+			//type : vsAI
+			createRoom(socket.id, type, true, false, true);
 
 			initGame(socket.id);
 
@@ -779,7 +818,6 @@ io.on("connection", (socket) => {
 		}
 	});
 	//spectate game room
-	//TODO..
 
 	//user left..
 	socket.on("disconnect", () => {
@@ -789,6 +827,10 @@ io.on("connection", (socket) => {
 		//leave room..
 		if (player && player.roomId !== "") {
 			leaveRoom(socket.id);
+		}
+		if (timers[socket.id]) {
+			clearInterval(timers[socket.id]);
+			delete timers[socket.id];
 		}
 
 		//remove player..

@@ -13,6 +13,7 @@ class Piece {
 		this.color = color;
 		this.isEnabled = false;
 		this.isSelected = false;
+		this.isCaptured = false;
 		this.mesh = this.createMesh();
 	}
 
@@ -88,39 +89,65 @@ class Piece {
 		return pieceGroup;
 	}
 
+	setCaptured(i) {
+		this.isCaptured = true;
+		this.row = null;
+		this.col = null;
+		this.isEnabled = false;
+		this.tileIndex = null;
+
+		this.mesh.position.set(
+			this.playerIndex == 0 ? 5.5 : -5.5,
+			0.06,
+			this.playerIndex == 0 ? i * 0.4 - 3.5 : -i * 0.4 + 3.5
+		);
+		// this.mesh.rotation.y = this.playerIndex == 0 ? Math.PI : 0;
+
+		// gsap.to(this.mesh.position, { x: xpos, z: zpos, duration: 1 });
+	}
 	// Set position of the square
-	updatePosition(row, col, jump = false) {
-		const disX = Math.abs(this.row - row);
-		const disZ = Math.abs(this.col - col);
-		const duration = disX > 4 || disZ > 4 ? 1.5 : 0.8;
+	updatePosition(row, col) {
+		this.jump(row, col);
+
 		this.row = row;
 		this.col = col;
 		this.tileIndex = row * 9 + col;
+	}
 
-		const xpos = this.col - 9 / 2 + 0.5;
-		const ypos = this.row - 8 / 2 + 0.5;
+	jump(row, col) {
+		const xpos = col - 9 / 2 + 0.5;
+		const ypos = row - 8 / 2 + 0.5;
 
-		// this.mesh.position.set(row - 9 / 2 + 0.5, 0, col - 8 / 2 + 0.5);
-		gsap.to(this.mesh.position, {
-			x: xpos,
-			y: 0.06,
-			z: ypos,
-			ease: "power4.out",
-			duration: duration,
-		});
+		const disX = Math.abs(this.row - row);
+		const disZ = Math.abs(this.col - col);
+		const isLong = disX > 3 || disZ > 1;
 
-		gsap.to(this.mesh.position, {
-			y: 1, // Jump up
-			duration: disX > 4 || disZ > 4 ? 0.3 : 0.15, // Quick jump up
-			ease: "power4.out",
-			onComplete: () => {
-				gsap.to(this.mesh.position, {
-					y: 0.06, // Return to the original position
-					duration: 0.4, // Smoothly fall back
-					ease: "bounce.out",
-				});
-			},
-		});
+		const tl = gsap.timeline();
+		tl.add("anim")
+			.to(
+				this.mesh.position,
+				{
+					x: xpos,
+					z: ypos,
+					ease: "power2.out",
+					duration: isLong ? 1 : 0.6,
+				},
+				"anim"
+			)
+			.to(
+				this.mesh.position,
+				{
+					y: isLong ? 1.2 : 0.8,
+					ease: "power4.out",
+					duration: 0.3,
+				},
+				"anim"
+			)
+			.to(
+				this.mesh.position,
+				{ y: 0.06, ease: "bounce.out", duration: isLong ? 0.7 : 0.3 },
+				"anim+=0.3"
+			);
 	}
 
 	select(selected = true) {

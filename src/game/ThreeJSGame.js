@@ -3,9 +3,11 @@ import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 import Tile from "./Tile.js";
 import Piece from "./Piece.js";
 import gsap from "gsap";
+import { EventEmitter } from "eventemitter3"; // Import EventEmitter
 
-class ThreeJSGame {
-	constructor(containerId, eventCallBack) {
+class ThreeJSGame extends EventEmitter {
+	constructor(containerId) {
+		super();
 		this.container = document.getElementById(containerId);
 		this.scene = new THREE.Scene();
 		this.camera = new THREE.PerspectiveCamera(
@@ -24,21 +26,19 @@ class ThreeJSGame {
 		this.clickablePieces = [];
 		this.toMovePiece = null;
 		this.gamePhase = "prep";
+		this.capturedPieces = [new Array(), new Array()];
 
 		this.rankValues = [
 			0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 12, 12, 12, 12, 12, 13, 13,
 			14,
 		];
-		this.eventCallBack = eventCallBack;
 	}
 
-	init(piecesData = []) {
-		this.createTiles();
-
+	init(fieldColor = 0, piecesData = []) {
+		//init tiles..
+		this.createTiles(fieldColor);
+		//init pieces.
 		this.createPlayerPieces(0, piecesData);
-
-		//const selfPiecesData = this.generatePiecesData(0, "white");
-		//this.createPlayerPieces(0, selfPiecesData);
 
 		this.setupCameraAndControls();
 		this.addLights();
@@ -68,6 +68,60 @@ class ThreeJSGame {
 		const directionalLight = new THREE.DirectionalLight(0xffffff, 0.5);
 		directionalLight.position.set(0, 5, 5);
 		this.scene.add(directionalLight);
+	}
+
+	initBrokenPieces(r, c, clr) {
+		// const brokenPieces = [];
+
+		for (let i = 0; i < 50; i++) {
+			const size = Math.random() * 0.12 + 0.06;
+
+			const xp = c - 9 / 2 + 0.5;
+			const zp = r - 8 / 2 + 0.5;
+
+			const boxMaterial = new THREE.MeshBasicMaterial({
+				color: clr === 0 ? 0xffffff : 0x000000,
+				transparent: true,
+				opacity: 1,
+				depthWrite: false,
+			});
+			const boxGeometry = new THREE.BoxGeometry(size, size, size);
+			const box = new THREE.Mesh(boxGeometry, boxMaterial);
+
+			// Initial position and rotation
+			box.position.set(xp, 0.06, zp);
+			box.rotation.set(
+				Math.random() * Math.PI * 2,
+				Math.random() * Math.PI * 2,
+				Math.random() * Math.PI * 2
+			);
+
+			const toRandomSize = Math.random() * 0.8 + 0.5;
+
+			gsap.to(box.position, {
+				x: Math.random() * 3 - 1.5 + xp,
+				y: Math.random() * 3 - 0.06,
+				z: Math.random() * 1 - 0.5 + zp,
+				duration: 0.4,
+				delay: i * 0.002,
+				ease: "power1.out",
+				onComplete: () => {
+					// brokenPieces.push(box);
+					this.scene.remove(box);
+					box.geometry.dispose();
+					box.material.dispose();
+				},
+			});
+			gsap.to(box.scale, {
+				x: Math.random() * toRandomSize,
+				y: Math.random() * toRandomSize,
+				z: Math.random() * toRandomSize,
+				duration: 0.4,
+				ease: "linear",
+			});
+
+			this.scene.add(box);
+		}
 	}
 
 	setupEventListeners() {
@@ -118,16 +172,20 @@ class ThreeJSGame {
 		}
 	}
 
-	createTiles() {
+	createTiles(zoneColor = 0) {
 		const boardGroup = new THREE.Group();
 		this.scene.add(boardGroup);
 
 		const rows = 8;
 		const cols = 9;
 
+		const tileColor1 = zoneColor == 0 ? "red" : "blue";
+		const tileColor2 = zoneColor == 0 ? "blue" : "red";
+
 		for (let row = 0; row < rows; row++) {
 			for (let col = 0; col < cols; col++) {
-				const square = new Tile(row, col, row < 4 ? "blue" : "red");
+				const color = row < 4 ? tileColor1 : tileColor2;
+				const square = new Tile(row, col, color);
 				boardGroup.add(square.mesh);
 				this.tiles.push(square);
 				this.clickableTiles.push(square.mesh.children[1]);
@@ -142,8 +200,11 @@ class ThreeJSGame {
 			const { row, col, color, rank } = pieceData;
 			const piece = new Piece(playerIndex, i, row, col, color, rank);
 			this.pieces.push(piece);
-			this.clickablePieces.push(piece.mesh.children[0]);
-			this.tiles[row * 9 + col].pieceIndex = i;
+			this.tiles[row * 9 + col].setIndexes(playerIndex, i);
+
+			if (playerIndex !== 1) {
+				this.clickablePieces.push(piece.mesh.children[0]);
+			}
 			this.scene.add(piece.mesh);
 			// console.log(row, col, row * 9 + col);
 		});
@@ -180,6 +241,14 @@ class ThreeJSGame {
 				this.getTilesInZone();
 			} else {
 				if (index !== this.toMovePiece.index) {
+					//emit..
+					this.emit("sendAction", {
+						action: "playerPieceMove",
+						pieceIndex: this.toMovePiece.index,
+						row: piece.row,
+						col: piece.col,
+					});
+					//..
 					this.switchPieces(index);
 				}
 				this.toMovePiece = null;
@@ -200,15 +269,15 @@ class ThreeJSGame {
 
 		if (!tile || !tile.isEnabled) return;
 
-		this.eventCallBack({
+		this.clearPieces();
+		this.clearTiles();
+		//emit data..
+		this.emit("sendAction", {
 			action: "playerPieceMove",
 			pieceIndex: this.toMovePiece.index,
 			row: tile.row,
 			col: tile.col,
 		});
-
-		this.clearPieces();
-		this.clearTiles();
 
 		if (this.gamePhase === "prep") {
 			if (tile.pieceIndex !== null) {
@@ -217,8 +286,8 @@ class ThreeJSGame {
 				this.movePiece(index);
 			}
 		} else {
-			// this.movePiece(index);
-			console.log("moving.. waiting for server..");
+			//console.log("moving.. waiting for server..");
+			const color = this.toMovePiece.color;
 			this.setPlayerPiecesEnabled(false);
 		}
 	}
@@ -242,32 +311,70 @@ class ThreeJSGame {
 	}
 
 	movePiece(clickedTileIndex) {
-		this.tiles[this.toMovePiece.tileIndex].pieceIndex = null;
+		this.tiles[this.toMovePiece.tileIndex].clearIndexes();
 
 		const newRow = this.tiles[clickedTileIndex].row;
 		const newCol = this.tiles[clickedTileIndex].col;
 
-		this.tiles[clickedTileIndex].pieceIndex = this.toMovePiece.index;
+		this.tiles[clickedTileIndex].setIndexes(
+			this.toMovePiece.index,
+			this.toMovePiece.playerIndex
+		);
 		this.toMovePiece.updatePosition(newRow, newCol);
 
 		this.toMovePiece = null;
 	}
 
 	movePieceUpdate(data) {
-		const { row, col, pieceIndex } = data;
+		const {
+			row,
+			col,
+			pieceIndex,
+			playerIndex,
+			clashResult,
+			winner,
+			captured,
+		} = data;
 
 		const piece = this.pieces[pieceIndex] || null;
 
-		if (!piece) return;
+		const newTileIndex = row * 9 + col;
 
 		const currentTileIndex = piece.tileIndex;
-		this.tiles[currentTileIndex].pieceIndex = null;
+		this.tiles[currentTileIndex].clearIndexes();
 
-		const newTileIndex = row * 9 + col;
-		this.tiles[newTileIndex].pieceIndex = pieceIndex;
+		if (clashResult >= 0) {
+			//..
+			piece.updatePosition(row, col);
 
-		piece.updatePosition(row, col);
-		this.toMovePiece = null;
+			if (clashResult === 0) {
+				this.tiles[newTileIndex].clearIndexes();
+			} else if (clashResult === 1) {
+				this.tiles[newTileIndex].setIndexes(playerIndex, pieceIndex);
+			} else {
+				//..nothing to do here
+			}
+
+			//remove
+			setTimeout(() => {
+				captured.forEach((p) => {
+					var capturedLength = this.capturedPieces[p.playerIndex].length;
+					if (!this.capturedPieces[p.playerIndex].includes(p.pieceIndex)) {
+						this.capturedPieces[p.playerIndex].push(p.pieceIndex);
+					}
+
+					this.pieces[p.pieceIndex].setCaptured(capturedLength);
+					//init piece exploding
+					this.initBrokenPieces(row, col, this.pieces[p.pieceIndex].color);
+				});
+			}, 700);
+		} else {
+			//..
+			this.tiles[newTileIndex].setIndexes(playerIndex, pieceIndex);
+			piece.updatePosition(row, col);
+		}
+
+		this.toMovePiece = null; //
 	}
 
 	clearTiles() {
@@ -277,6 +384,7 @@ class ThreeJSGame {
 	clearPieces() {
 		this.pieces.forEach((piece) => piece.select(false));
 	}
+
 	getRandomRankValues(array) {
 		for (let i = array.length - 1; i > 0; i--) {
 			const randomIndex = Math.floor(Math.random() * (i + 1));
@@ -328,7 +436,8 @@ class ThreeJSGame {
 		}
 
 		adjacentTiles.forEach((tileIndex) => {
-			if (this.tiles[tileIndex].pieceIndex === null) {
+			// console.log(this.tiles[tileIndex]);
+			if (this.tiles[tileIndex].playerIndex !== 0) {
 				this.tiles[tileIndex].blink();
 			}
 		});
