@@ -22,10 +22,10 @@ class Room {
 		this.pieces = [];
 		this.tiles = [];
 		this.isFinished = false;
-		// this.challengeResult = null;
-		// this.movedPiece = null;
 		this.move = null;
+		this.winner = -1;
 		//add host to players..
+		// this.winData = null;
 		this.addPlayer(host);
 	}
 
@@ -49,12 +49,20 @@ class Room {
 			index !== base.playerIndex ? base.pieceIndex + 21 : base.pieceIndex;
 
 		base.captured = base.captured.map((captured) => ({
-			playerIndex: captured.playerIndex,
+			playerIndex:
+				index == 0
+					? captured.playerIndex
+					: captured.playerIndex == 0
+					? 1
+					: 0,
 			pieceIndex:
 				index !== captured.playerIndex
 					? captured.pieceIndex + 21
 					: captured.pieceIndex,
 		}));
+
+		base.playerIndex =
+			index === 0 ? base.playerIndex : base.playerIndex == 0 ? 1 : 0;
 
 		return base;
 	}
@@ -80,6 +88,15 @@ class Room {
 					}));
 	}
 
+	getPiecesRanks(playerIndex) {
+		return this.pieces
+			.filter((piece) => piece.playerIndex === playerIndex)
+			.map(({ rank }) => ({ rank }));
+	}
+
+	getWinningPromptMessage() {
+		return `${this.players[this.winner].username} has won the game!`;
+	}
 	initGame() {
 		// Initialize game logic here
 		this.setPlayersTurn();
@@ -140,16 +157,25 @@ class Room {
 			const col = i % 9;
 			positions.push({ row: playerIndex === 0 ? row : 5 + row, col });
 		}
-
 		//randomize elements order..
 		const shuffledPositions = Utils.shuffleList(positions);
-
 		return shuffledPositions.slice(0, 21);
+	}
+
+	generateFixedPosition() {
+		let positions = [];
+		for (let i = 0; i < 21; i++) {
+			const row = Math.floor(i / 7);
+			const col = i % 7;
+			positions.push({ row: 5 + row, col: col });
+		}
+		return positions;
 	}
 
 	generateAIPosition() {
 		this.clearGrid(1);
-		const newPost = this.generateRandomPiecesPosition(1);
+		// const newPost = this.generateRandomPiecesPosition(1);
+		const newPost = this.generateFixedPosition();
 
 		newPost.forEach((post, i) => {
 			this.pieces[i + 21].row = post.row;
@@ -242,7 +268,6 @@ class Room {
 			this.players.find((plyr) => plyr.socketId === socketId) || null;
 
 		// console.log("isMoveGood", this.isMoveGood(socketId, data));
-
 		if (
 			!player ||
 			(this.phase == "main" && player.turn !== this.turn) ||
@@ -306,9 +331,53 @@ class Room {
 		this.turn = 0;
 	}
 
-	endGame() {
-		//..
+	setWinner(playerIndex) {
+		this.players[playerIndex].wins += 1;
+		this.players[playerIndex == 0 ? 1 : 0].loss += 1;
+
+		this.winner = playerIndex;
 		this.isFinished = true;
+		console.log(`${this.players[playerIndex].username} wins!!`);
+	}
+
+	checkWin(pieceIndex) {
+		const piece = this.pieces[pieceIndex];
+		if (!piece) return;
+
+		console.log("checking..");
+
+		if (piece.isAtThreshold() && piece.rank == 14) {
+			if (this.hasAdjacentOpponentPieces(pieceIndex)) {
+				this.players[piece.playerIndex].isReached = true;
+				console.log("has opps lurking..");
+			} else {
+				this.setWinner(piece.playerIndex);
+				console.log("winner..");
+			}
+		}
+	}
+
+	clockExpired() {
+		const winner = this.players[0].turn == this.turn ? 1 : 0;
+		this.setWinner(winner);
+		console.log(
+			`${this.players[winner == 0 ? 1 : 0].username} clock has expired.`
+		);
+	}
+
+	hasAdjacentOpponentPieces(pieceIndex) {
+		const piece = this.pieces[pieceIndex];
+		const adjacents = Utils.getAdjacent(piece.row, piece.col);
+		for (let adj of adjacents) {
+			const tile = this.tiles[adj.row][adj.col];
+			if (
+				tile.playerIndex !== null &&
+				tile.playerIndex !== piece.playerIndex
+			) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	addRound() {
@@ -317,6 +386,12 @@ class Room {
 
 	switchTurn() {
 		this.turn = this.turn === 0 ? 1 : 0;
+
+		//check if there is player that is winning..
+		const playerIndex = this.players.findIndex((p) => p.turn === this.turn);
+		if (playerIndex >= 0 && this.players[playerIndex].isReached) {
+			this.setWinner(playerIndex);
+		}
 	}
 
 	setPlayersTurn() {
@@ -421,6 +496,8 @@ class Room {
 
 			//set piece new post..
 			this.pieces[toMovePieceIndex].setPosition(newRow, newCol);
+
+			this.checkWin(toMovePieceIndex);
 		} else {
 			const stationedPieceIndex = this.tiles[newRow][newCol].pieceIndex;
 
@@ -461,12 +538,20 @@ class Room {
 							playerIndex == 1 ? 0 : 1
 						);
 
+						if (this.pieces[stationedPieceIndex].rank === 14) {
+							this.setWinner(playerIndex);
+						}
+
 						break;
 					case 2:
 						//stationed piece wins the challenge
 						this.pieces[toMovePieceIndex].setCaptured();
 
 						newMove.setCapturedPiece(toMovePieceIndex, playerIndex);
+
+						if (this.pieces[toMovePieceIndex].rank === 14) {
+							this.setWinner(playerIndex == 0 ? 1 : 0);
+						}
 
 						break;
 					case 0:
@@ -481,6 +566,13 @@ class Room {
 							playerIndex == 1 ? 0 : 1
 						);
 
+						if (
+							this.pieces[toMovePieceIndex].rank === 14 &&
+							this.pieces[stationedPieceIndex].rank == 14
+						) {
+							this.setWinner(playerIndex);
+						}
+
 						break;
 					default:
 					//
@@ -493,7 +585,7 @@ class Room {
 	}
 
 	compareRanks(rank1, rank2) {
-		console.log("r", rank1, rank2);
+		// console.log("r", rank1, rank2);
 		if (rank1 === 13) {
 			return rank2 === 12 ? 2 : 1; // 13 loses to 12, wins against others
 		}

@@ -14,7 +14,11 @@ class Piece {
 		this.isEnabled = false;
 		this.isSelected = false;
 		this.isCaptured = false;
-		this.mesh = this.createMesh();
+		this.anim = null;
+
+		this.createMesh();
+		if (rankValue !== null && rankValue !== undefined)
+			this.showRank(rankValue);
 	}
 
 	createMesh() {
@@ -46,35 +50,6 @@ class Piece {
 
 		pieceGroup.add(vert, vertBorder, base, baseBorder);
 
-		if (this.rankValue !== null) {
-			//apply rank with texture..
-			const texturePath = `/game/assets/images/ranks_${
-				this.color == 0 ? "white" : "black"
-			}.png`;
-			const texture = new THREE.TextureLoader().load(texturePath);
-			texture.generateMipmaps = false; // Disable mipmaps
-			texture.minFilter = THREE.LinearFilter;
-
-			texture.wrapS = THREE.RepeatWrapping;
-			texture.wrapT = THREE.RepeatWrapping;
-			texture.repeat.set(1 / 3, 1 / 5);
-
-			const column = this.rankValue % 3;
-			const row = Math.floor(this.rankValue / 3); // Floor division to get the row number
-
-			texture.offset.set(column / 3, 1 - (row + 1) / 5); // Adjust offset
-
-			const planeGeometry = new THREE.PlaneGeometry(0.79, 0.51);
-			const planeMaterial = new THREE.MeshBasicMaterial({
-				map: texture, // Apply the texture
-			});
-			const plane = new THREE.Mesh(planeGeometry, planeMaterial);
-			plane.position.set(0, 0.28, 0.06);
-			plane.rotation.x = -Math.PI / 5;
-
-			pieceGroup.add(plane);
-		}
-
 		//set pieceGroup rotation..
 		if (this.playerIndex !== 0) {
 			pieceGroup.rotation.y = Math.PI; // Rotate piece 180 degrees for self-placement
@@ -86,7 +61,50 @@ class Piece {
 
 		pieceGroup.position.set(x, 0.06, z);
 
-		return pieceGroup;
+		this.mesh = pieceGroup;
+	}
+
+	showRank(rank) {
+		// if (rank == undefined || rank == null) return;
+		// console.log(rank);
+
+		//apply rank with texture..
+		const texturePath = `/game/assets/images/ranks_${
+			this.color == 0 ? "white" : "black"
+		}.png`;
+		const texture = new THREE.TextureLoader().load(texturePath);
+		texture.generateMipmaps = false; // Disable mipmaps
+		texture.minFilter = THREE.LinearFilter;
+
+		texture.wrapS = THREE.RepeatWrapping;
+		texture.wrapT = THREE.RepeatWrapping;
+		texture.repeat.set(1 / 3, 1 / 5);
+
+		const column = rank % 3;
+		const row = Math.floor(rank / 3); // Floor division to get the row number
+
+		texture.offset.set(column / 3, 1 - (row + 1) / 5); // Adjust offset
+
+		const planeGeometry = new THREE.PlaneGeometry(0.79, 0.51);
+		const planeMaterial = new THREE.MeshBasicMaterial({
+			map: texture, // Apply the texture
+		});
+		const plane = new THREE.Mesh(planeGeometry, planeMaterial);
+		plane.position.set(0, 0.28, 0.06);
+		plane.rotation.x = -Math.PI / 5;
+
+		// pieceGroup.add(plane);
+		this.mesh.add(plane);
+		// this.mesh.rotation.y = 0;
+		gsap.to(this.mesh.rotation, {
+			z: 0,
+			x: 0,
+			y: 0,
+			duration: 1.5,
+			ease: "power4.out",
+		});
+
+		this.rankValue = rank;
 	}
 
 	setCaptured(i) {
@@ -96,9 +114,14 @@ class Piece {
 		this.isEnabled = false;
 		this.tileIndex = null;
 
+		if (this.anim) {
+			this.anim.kill();
+			this.anim = null;
+		}
+
 		this.mesh.position.set(
-			this.playerIndex == 0 ? 5.5 : -5.5,
-			0.06,
+			this.playerIndex == 0 ? -5.5 : 5.5,
+			0,
 			this.playerIndex == 0 ? i * 0.4 - 3.5 : -i * 0.4 + 3.5
 		);
 		// this.mesh.rotation.y = this.playerIndex == 0 ? Math.PI : 0;
@@ -122,8 +145,9 @@ class Piece {
 		const disZ = Math.abs(this.col - col);
 		const isLong = disX > 3 || disZ > 1;
 
-		const tl = gsap.timeline();
-		tl.add("anim")
+		this.anim = gsap.timeline();
+		this.anim
+			.add("anim")
 			.to(
 				this.mesh.position,
 				{

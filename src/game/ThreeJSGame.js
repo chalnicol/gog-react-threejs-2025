@@ -16,8 +16,11 @@ class ThreeJSGame extends EventEmitter {
 			0.1,
 			1000
 		);
-		this.renderer = new THREE.WebGLRenderer();
+		this.renderer = new THREE.WebGLRenderer({ antialias: true });
 		this.renderer.setSize(window.innerWidth, window.innerHeight);
+		this.renderer.setPixelRatio(window.devicePixelRatio);
+		// this.renderer.shadowMap.enabled = true;
+		// this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 		this.container.appendChild(this.renderer.domElement);
 
 		this.tiles = [];
@@ -27,6 +30,7 @@ class ThreeJSGame extends EventEmitter {
 		this.toMovePiece = null;
 		this.gamePhase = "prep";
 		this.capturedPieces = [new Array(), new Array()];
+		this.animation = null;
 
 		this.rankValues = [
 			0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 12, 12, 12, 12, 12, 13, 13,
@@ -39,12 +43,18 @@ class ThreeJSGame extends EventEmitter {
 		this.createTiles(fieldColor);
 		//init pieces.
 		this.createPlayerPieces(0, piecesData);
-
 		this.setupCameraAndControls();
 		this.addLights();
 		this.setupEventListeners();
 		this.animate();
 	}
+
+	// initFieldAndPieces(fieldColor = 0, piecesData = []) {
+	// 	//init tiles..
+	// 	this.createTiles(fieldColor);
+	// 	//init pieces.
+	// 	this.createPlayerPieces(0, piecesData);
+	// }
 
 	setupCameraAndControls() {
 		this.camera.position.set(0, 5, 6);
@@ -210,6 +220,13 @@ class ThreeJSGame extends EventEmitter {
 		});
 	}
 
+	showOpponentRanks(ranks) {
+		const oppoPieces = this.pieces.filter((piece) => piece.playerIndex === 1);
+		oppoPieces.forEach((piece, i) => {
+			piece.showRank(ranks[i].rank);
+			console.log(ranks[i]);
+		});
+	}
 	generatePiecesData(playerIndex, clr) {
 		const piecesData = [];
 		const ranks = this.getRandomRankValues(this.rankValues);
@@ -367,7 +384,7 @@ class ThreeJSGame extends EventEmitter {
 					//init piece exploding
 					this.initBrokenPieces(row, col, this.pieces[p.pieceIndex].color);
 				});
-			}, 700);
+			}, 400);
 		} else {
 			//..
 			this.tiles[newTileIndex].setIndexes(playerIndex, pieceIndex);
@@ -448,9 +465,28 @@ class ThreeJSGame extends EventEmitter {
 	}
 
 	animate() {
-		requestAnimationFrame(this.animate.bind(this));
+		this.animation = requestAnimationFrame(this.animate.bind(this));
 		this.controls.update();
 		this.renderer.render(this.scene, this.camera);
+	}
+	cleanup() {
+		cancelAnimationFrame(this.animation);
+		this.scene.traverse((object) => {
+			if (object.isMesh) {
+				object.geometry.dispose();
+				object.material.dispose();
+			}
+		});
+		this.renderer.domElement.remove();
+		this.renderer.dispose();
+		this.controls.dispose();
+
+		// Clear references
+		this.scene = null;
+		// this.camera = null;
+		this.renderer = null;
+		this.controls = null;
+		console.log("cleanup complete");
 	}
 }
 

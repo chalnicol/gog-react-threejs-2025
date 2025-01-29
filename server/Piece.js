@@ -7,6 +7,7 @@ class Piece {
 		this.rank = rank;
 		this.playerIndex = playerIndex;
 		this.isCaptured = false;
+		// this.reached = false;
 	}
 
 	setCaptured() {
@@ -17,6 +18,12 @@ class Piece {
 	setPosition(row, col) {
 		this.row = row;
 		this.col = col;
+	}
+	isAtThreshold() {
+		return (
+			(this.playerIndex === 0 && this.row === 7) ||
+			(this.playerIndex === 1 && this.row === 0)
+		);
 	}
 }
 

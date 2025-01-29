@@ -104,7 +104,9 @@ const startPrep = (roomId) => {
 	emitData(roomId, {
 		event: "startPrep",
 		clock: room.prepTime,
-		// phase: "prep",
+		phase: "prep",
+		message:
+			"Prepare your ranks. Click on a piece to move it or swap its position by clicking on another piece or tile. Hit 'Ready' when finished.",
 	});
 
 	//..
@@ -127,10 +129,11 @@ const startClock = (roomId) => {
 
 		if (tick >= maxTime) {
 			//perfom action when clock ends..
+			clearInterval(timers[roomId]);
 			if (room.phase === "prep") {
 				endPrep(roomId);
 			} else {
-				endGame(roomId);
+				endGame(roomId, true);
 			}
 		}
 	}, 1000);
@@ -152,11 +155,13 @@ const endPrep = (roomId) => {
 			event: "endPrep",
 			players: room.players,
 			oppoPieces: room.getPieces(true, false, 1),
+			message: "Game commencing.. Ready to play!",
 		},
 		{
 			event: "endPrep",
 			players: [...room.players].reverse(),
 			oppoPieces: room.getPieces(false, false, 0),
+			message: "Game commencing.. Ready to play!",
 		},
 	];
 
@@ -181,58 +186,94 @@ const startGame = (roomId) => {
 		setTimeout(() => aiMove(roomId), 500);
 	}
 
-	const toSendData = [
-		{
+	let toSendData = [];
+	for (let i in room.players) {
+		toSendData.push({
 			event: "startGame",
 			clock: room.turnTime,
-			isTurn: room.isPlayerTurn(),
-		},
-		{
-			event: "startGame",
-			clock: room.turnTime,
-			isTurn: room.isPlayerTurn(1),
-		},
-	];
+			isTurn: room.isPlayerTurn(i),
+			phase: "main",
+			message: "Let's go!",
+		});
+	}
 	emitData(roomId, toSendData, true);
 
 	console.log(`Game: ${roomId} has started.`);
 };
 
-const endGame = (roomId) => {
+const endGame = (roomId, clockExpired = false) => {
 	const room = rooms[roomId];
-	room.endGame();
+	if (!room) return;
+	if (clockExpired) {
+		room.clockExpired();
+	}
+	//make sure clock stops..
 	if (room.type === "blitz") {
 		clearInterval(timers[roomId]);
 	}
+	//emit..
+	let toSendData = [
+		{
+			event: "endGame",
+			message: room.getWinningPromptMessage(),
+			players: room.players,
+			oppoPiecesRanks: room.getPiecesRanks(1),
+		},
+		{
+			event: "endGame",
+			message: room.getWinningPromptMessage(),
+			players: [...room.players].reverse(),
+			oppoPiecesRanks: room.getPiecesRanks(0),
+		},
+	];
+	emitData(roomId, toSendData, true);
+
+	console.log(`Game : ${roomId} has ended.`);
 };
 
 const switchTurn = (roomId) => {
 	const room = rooms[roomId];
+	if (!room) return;
+
 	room.switchTurn();
 
-	if (room.type === "blitz") {
-		startClock(roomId);
+	if (!room.isFinished) {
+		if (room.type === "blitz") {
+			startClock(roomId);
+		}
+		if (room.vsAi && room.players[1].turn === room.turn) {
+			setTimeout(() => aiMove(roomId), 500);
+		}
+	} else {
+		setTimeout(() => endGame(roomId), 10);
 	}
-	if (room.vsAi && room.players[1].turn === room.turn) {
-		setTimeout(() => aiMove(roomId), 1500);
-	}
-	// showGrid(room.tiles);
 
-	const toSendData = [
-		{
+	let toSendData = [];
+	room.players.forEach((p, i) => {
+		toSendData.push({
 			event: "switchTurn",
-			isTurn: room.isPlayerTurn(),
-			move: room.getMove(0),
-		},
-		{
-			event: "switchTurn",
-			isTurn: room.isPlayerTurn(1),
-			move: room.getMove(1),
-		},
-	];
+			isTurn: room.isPlayerTurn(i),
+			clock: room.turnTime,
+		});
+	});
 
 	emitData(roomId, toSendData, true);
 	// console.log(`Game: ${roomId} switch turn.`);
+};
+
+const sendPlayerMove = (roomId) => {
+	const room = rooms[roomId];
+	if (!room) return;
+
+	let toSendData = [];
+	room.players.forEach((player, i) => {
+		toSendData.push({
+			event: "sendPlayerMove",
+			move: room.getMove(i),
+		});
+	});
+
+	emitData(roomId, toSendData, true);
 };
 
 const emitData = (roomId, data, isSeparate = false) => {
@@ -302,7 +343,10 @@ const leaveRoom = (socketId) => {
 		clearTimeout(timers[room.id]);
 
 		if (!room.vsAi && room.players.length > 0) {
-			emitData(room.id, { event: "playerLeave", username: username });
+			emitData(room.id, {
+				event: "playerLeave",
+				message: `${username} has left the game.`,
+			});
 		} else {
 			//delete room..
 			delete rooms[roomId];
@@ -352,11 +396,7 @@ const playerMove = (socketId, data) => {
 
 	if (!player || !room) return;
 
-	//check move if is valid..
-	const isValidMove = room.isValidMove(socketId, data);
-	// console.log("valid", isValidMove);
-
-	if (isValidMove) {
+	if (!room.isFinished && room.isValidMove(socketId, data)) {
 		room.setPlayerMove(socketId, data);
 		proceed(room.id);
 	}
@@ -390,10 +430,11 @@ const proceed = (roomId) => {
 	if (!room) return;
 
 	if (room.phase !== "prep") {
+		sendPlayerMove(roomId);
 		if (!room.isFinished) {
-			switchTurn(roomId);
+			setTimeout(() => switchTurn(roomId), room.move.isClash ? 1000 : 10);
 		} else {
-			endGame(roomId);
+			setTimeout(() => endGame(roomId), 1000);
 		}
 	}
 	//..
@@ -426,6 +467,8 @@ io.on("connection", (socket) => {
 		const { type, isPrivate, playerInvited, allowSpectators } = roomData;
 
 		const host = players[socket.id];
+
+		if (!host) return;
 
 		const invited = getPlayer(playerInvited);
 

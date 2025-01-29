@@ -49,7 +49,7 @@ const GamePrompt = ({ message, isAutoClose = true, onClose }) => {
 		<>
 			<div
 				ref={promptRef}
-				className="scale-0 absolute flex items-center w-11/12 max-w-xl left-[50%] translate-x-[-50%] bg-yellow-100 border-2 border-yellow-300 text-green-900 top-36 sm:top-16 px-4 py-2 rounded-lg"
+				className="scale-0 absolute flex items-center w-11/12 max-w-xl left-[50%] translate-x-[-50%] bg-yellow-100 border-2 border-yellow-300 text-gray-700 top-36 sm:top-16 px-4 py-2 rounded-lg"
 			>
 				<FontAwesomeIcon icon={faCircleInfo} />
 

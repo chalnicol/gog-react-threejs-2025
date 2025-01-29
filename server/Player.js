@@ -12,6 +12,7 @@ class Player {
 		this.loss = 0;
 		this.fieldColor = 0;
 		this.isReady = false;
+		this.isReached = false;
 	}
 
 	setRoom(roomId) {

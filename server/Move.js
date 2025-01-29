@@ -4,8 +4,8 @@ class Move {
 		this.col = -1;
 		this.pieceIndex = -1;
 		this.playerIndex = -1;
-		this.winner = -1;
 		this.clashResult = -1;
+		this.isClash = false;
 		this.captured = [];
 	}
 
@@ -17,11 +17,6 @@ class Move {
 		this.playerIndex = playerIndex;
 	}
 
-	setWin(playerIndex) {
-		// this.win = true;
-		this.winner = playerIndex;
-	}
-
 	setCapturedPiece(pieceIndex, playerIndex) {
 		this.captured.push({
 			pieceIndex: playerIndex === 1 ? pieceIndex - 21 : pieceIndex,
@@ -30,6 +25,7 @@ class Move {
 	}
 	setClash(result) {
 		this.clashResult = result;
+		this.isClash = true;
 	}
 }
 
