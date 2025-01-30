@@ -42,19 +42,12 @@ class ThreeJSGame extends EventEmitter {
 		//init tiles..
 		this.createTiles(fieldColor);
 		//init pieces.
-		this.createPlayerPieces(0, piecesData);
+		setTimeout(() => this.createPlayerPieces(0, piecesData), 500);
 		this.setupCameraAndControls();
 		this.addLights();
 		this.setupEventListeners();
 		this.animate();
 	}
-
-	// initFieldAndPieces(fieldColor = 0, piecesData = []) {
-	// 	//init tiles..
-	// 	this.createTiles(fieldColor);
-	// 	//init pieces.
-	// 	this.createPlayerPieces(0, piecesData);
-	// }
 
 	setupCameraAndControls() {
 		this.camera.position.set(0, 5, 6);
@@ -84,13 +77,16 @@ class ThreeJSGame extends EventEmitter {
 		// const brokenPieces = [];
 
 		for (let i = 0; i < 50; i++) {
-			const size = Math.random() * 0.12 + 0.06;
+			// const size = Math.random() * 0.12 + 0.06;
+			const size = 0.2;
 
 			const xp = c - 9 / 2 + 0.5;
 			const zp = r - 8 / 2 + 0.5;
 
+			const color = clr === 0 ? 0xdfdfdf : 0x2a2a2a;
+
 			const boxMaterial = new THREE.MeshBasicMaterial({
-				color: clr === 0 ? 0xffffff : 0x000000,
+				color: i < 30 ? color : 0xffbf00,
 				transparent: true,
 				opacity: 1,
 				depthWrite: false,
@@ -127,7 +123,7 @@ class ThreeJSGame extends EventEmitter {
 				y: Math.random() * toRandomSize,
 				z: Math.random() * toRandomSize,
 				duration: 0.4,
-				ease: "linear",
+				ease: "sine.out",
 			});
 
 			this.scene.add(box);
@@ -218,13 +214,27 @@ class ThreeJSGame extends EventEmitter {
 			this.scene.add(piece.mesh);
 			// console.log(row, col, row * 9 + col);
 		});
+
+		const pieceMesh = this.pieces
+			.filter((piece) => piece.playerIndex === playerIndex)
+			.map((piece) => piece.mesh.position);
+
+		const anim = gsap.to(pieceMesh, {
+			y: 0.06, // Bigger wave height
+			duration: (i) => {
+				return Math.random() * 0.8 + 0.2;
+			},
+			ease: "bounce.out",
+			delay: 0.3,
+		});
+		// anim.timeScale(1.5);
 	}
 
 	showOpponentRanks(ranks) {
 		const oppoPieces = this.pieces.filter((piece) => piece.playerIndex === 1);
 		oppoPieces.forEach((piece, i) => {
 			piece.showRank(ranks[i].rank);
-			console.log(ranks[i]);
+			// console.log(ranks[i]);
 		});
 	}
 	generatePiecesData(playerIndex, clr) {

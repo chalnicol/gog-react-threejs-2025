@@ -18,6 +18,13 @@ const Game = React.memo(({ gameUpdates, onGameAction }) => {
 			});
 			gameRef.current = threeJSGame;
 		}
+		return () => {
+			if (gameRef.current) {
+				gameRef.current.cleanup();
+				gameRef.current = null;
+			}
+			console.log("unmounted..");
+		};
 	}, []);
 	useEffect(() => {
 		if (gameUpdates) {
@@ -46,12 +53,6 @@ const Game = React.memo(({ gameUpdates, onGameAction }) => {
 				gameRef.current.setPlayerPiecesEnabled(false);
 			}
 		}
-		return () => {
-			if (gameRef.current) {
-				// gameRef.current.destroy();
-			}
-			console.log("unmounted..");
-		};
 	}, [gameUpdates]);
 
 	return (

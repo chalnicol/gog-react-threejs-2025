@@ -77,7 +77,7 @@ const initGame = (roomId) => {
 	room.initGame();
 
 	clearTimeout(timers[roomId]);
-	timers[roomId] = setTimeout(() => startPrep(roomId), 2000);
+	timers[roomId] = setTimeout(() => startPrep(roomId), 1500);
 
 	//emit..
 
@@ -105,8 +105,10 @@ const startPrep = (roomId) => {
 		event: "startPrep",
 		clock: room.prepTime,
 		phase: "prep",
-		message:
-			"Prepare your ranks. Click on a piece to move it or swap its position by clicking on another piece or tile. Hit 'Ready' when finished.",
+		message: {
+			toConfirm: false,
+			text: "Prepare your ranks. Click on a piece to move it or swap its position by clicking on another piece or tile. Hit 'Ready' when finished.",
+		},
 	});
 
 	//..
@@ -126,6 +128,7 @@ const startClock = (roomId) => {
 	timers[roomId] = setInterval(() => {
 		tick++;
 		emitData(roomId, { event: "clockTick", clock: maxTime - tick });
+		// console.log("clock starts", tick);
 
 		if (tick >= maxTime) {
 			//perfom action when clock ends..
@@ -148,27 +151,28 @@ const endPrep = (roomId) => {
 		clearInterval(timers[roomId]);
 	}
 
-	// console.log(room.pieces);
+	setTimeout(() => startGame(roomId), 3000);
 
-	const toSendData = [
-		{
+	//..
+	let toSendData = [];
+
+	room.players.forEach((player, i) => {
+		toSendData.push({
 			event: "endPrep",
-			players: room.players,
-			oppoPieces: room.getPieces(true, false, 1),
-			message: "Game commencing.. Ready to play!",
-		},
-		{
-			event: "endPrep",
-			players: [...room.players].reverse(),
-			oppoPieces: room.getPieces(false, false, 0),
-			message: "Game commencing.. Ready to play!",
-		},
-	];
+			players: room.getPlayers(i),
+			oppoPieces:
+				i === 0
+					? room.getPieces(true, false, 1)
+					: room.getPieces(false, false, 0),
+			message: {
+				toConfirm: false,
+				text: "Game commencing.. Ready to play!",
+			},
+		});
+	});
 
 	// console.log(room.pieces);
 	emitData(roomId, toSendData, true);
-
-	timers[roomId] = setTimeout(() => startGame(roomId), 2000);
 
 	console.log(`Game: ${roomId} preparations has ended.`);
 };
@@ -187,13 +191,16 @@ const startGame = (roomId) => {
 	}
 
 	let toSendData = [];
-	for (let i in room.players) {
+	for (let i = 0; i < room.players.length; i++) {
 		toSendData.push({
 			event: "startGame",
 			clock: room.turnTime,
-			isTurn: room.isPlayerTurn(i),
+			turn: room.getTurn(i),
 			phase: "main",
-			message: "Let's go!",
+			message: {
+				toConfirm: false,
+				text: "Game on! Let’s play",
+			},
 		});
 	}
 	emitData(roomId, toSendData, true);
@@ -212,20 +219,20 @@ const endGame = (roomId, clockExpired = false) => {
 		clearInterval(timers[roomId]);
 	}
 	//emit..
-	let toSendData = [
-		{
+	let toSendData = [];
+	for (let i = 0; i < room.players.length; i++) {
+		toSendData.push({
 			event: "endGame",
-			message: room.getWinningPromptMessage(),
-			players: room.players,
-			oppoPiecesRanks: room.getPiecesRanks(1),
-		},
-		{
-			event: "endGame",
-			message: room.getWinningPromptMessage(),
-			players: [...room.players].reverse(),
-			oppoPiecesRanks: room.getPiecesRanks(0),
-		},
-	];
+			phase: "end",
+			message: {
+				toConfirm: true,
+				text: room.getWinningPromptMessage(i),
+			},
+			players: i == 0 ? room.players : [...room.players].reverse(),
+			oppoPiecesRanks: room.getPiecesRanks(i == 0 ? 1 : 0),
+		});
+	}
+
 	emitData(roomId, toSendData, true);
 
 	console.log(`Game : ${roomId} has ended.`);
@@ -252,7 +259,7 @@ const switchTurn = (roomId) => {
 	room.players.forEach((p, i) => {
 		toSendData.push({
 			event: "switchTurn",
-			isTurn: room.isPlayerTurn(i),
+			turn: room.getTurn(i),
 			clock: room.turnTime,
 		});
 	});
@@ -400,6 +407,17 @@ const playerMove = (socketId, data) => {
 		room.setPlayerMove(socketId, data);
 		proceed(room.id);
 	}
+};
+
+const playerSurrender = (socketId) => {
+	const player = players[socketId];
+	const room = rooms[player.roomId];
+
+	if (!player || !room) return;
+	if (!room.isFinished) {
+		room.playerSurrender(socketId);
+	}
+	endGame(room.id);
 };
 
 const showGrid = (tiles) => {
@@ -857,9 +875,13 @@ io.on("connection", (socket) => {
 				const { action, ...rest } = data;
 				playerMove(socket.id, { ...rest });
 				break;
+			case "playerSurrender":
+				playerSurrender(socket.id);
+				break;
 			default:
 		}
 	});
+
 	//spectate game room
 
 	//user left..

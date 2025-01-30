@@ -17,8 +17,7 @@ class Piece {
 		this.anim = null;
 
 		this.createMesh();
-		if (rankValue !== null && rankValue !== undefined)
-			this.showRank(rankValue);
+		if (rankValue !== null && rankValue !== undefined) this.addRank();
 	}
 
 	createMesh() {
@@ -59,15 +58,12 @@ class Piece {
 		const x = this.col - 9 / 2 + 0.5;
 		const z = this.row - 8 / 2 + 0.5;
 
-		pieceGroup.position.set(x, 0.06, z);
+		pieceGroup.position.set(x, 0.7, z);
 
 		this.mesh = pieceGroup;
 	}
 
-	showRank(rank) {
-		// if (rank == undefined || rank == null) return;
-		// console.log(rank);
-
+	addRank() {
 		//apply rank with texture..
 		const texturePath = `/game/assets/images/ranks_${
 			this.color == 0 ? "white" : "black"
@@ -80,8 +76,8 @@ class Piece {
 		texture.wrapT = THREE.RepeatWrapping;
 		texture.repeat.set(1 / 3, 1 / 5);
 
-		const column = rank % 3;
-		const row = Math.floor(rank / 3); // Floor division to get the row number
+		const column = this.rankValue % 3;
+		const row = Math.floor(this.rankValue / 3); // Floor division to get the row number
 
 		texture.offset.set(column / 3, 1 - (row + 1) / 5); // Adjust offset
 
@@ -93,18 +89,34 @@ class Piece {
 		plane.position.set(0, 0.28, 0.06);
 		plane.rotation.x = -Math.PI / 5;
 
-		// pieceGroup.add(plane);
 		this.mesh.add(plane);
-		// this.mesh.rotation.y = 0;
-		gsap.to(this.mesh.rotation, {
-			z: 0,
-			x: 0,
-			y: 0,
-			duration: 1.5,
-			ease: "power4.out",
-		});
+	}
 
+	showRank(rank) {
 		this.rankValue = rank;
+		this.addRank();
+		this.rotate();
+	}
+
+	rotate() {
+		var tl = gsap.timeline();
+
+		tl.add("anim")
+			.to(
+				this.mesh.position,
+				{ y: 0.3, duration: 0.3, ease: "power2.out" },
+				"anim"
+			)
+			.to(
+				this.mesh.rotation,
+				{ y: 0, duration: 0.9, ease: "power1.out" },
+				"anim"
+			)
+			.to(
+				this.mesh.position,
+				{ y: 0.06, duration: 0.6, ease: "bounce.out" },
+				"anim+=0.3"
+			);
 	}
 
 	setCaptured(i) {
@@ -124,6 +136,7 @@ class Piece {
 			0,
 			this.playerIndex == 0 ? i * 0.4 - 3.5 : -i * 0.4 + 3.5
 		);
+
 		// this.mesh.rotation.y = this.playerIndex == 0 ? Math.PI : 0;
 
 		// gsap.to(this.mesh.position, { x: xpos, z: zpos, duration: 1 });

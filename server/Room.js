@@ -33,8 +33,9 @@ class Room {
 		return index === 0 ? this.players : [...this.players].reverse();
 	}
 
-	isPlayerTurn(playerIndex = 0) {
-		return this.players[playerIndex].turn === this.turn;
+	getTurn(playerIndex = 0) {
+		// return this.players[playerIndex].turn === this.turn;
+		return playerIndex === 0 ? (this.turn == 0 ? 1 : 0) : this.turn;
 	}
 
 	getMove(index) {
@@ -94,8 +95,13 @@ class Room {
 			.map(({ rank }) => ({ rank }));
 	}
 
-	getWinningPromptMessage() {
-		return `${this.players[this.winner].username} has won the game!`;
+	getWinningPromptMessage(index) {
+		// return `${
+		// 	this.players[this.winner].username
+		// } wins the game! Wanna play again?`;
+		return index == this.winner
+			? "Congrats, You win! Play again?"
+			: "Sorry, You lose. Play again?";
 	}
 	initGame() {
 		// Initialize game logic here
@@ -123,11 +129,11 @@ class Room {
 		const ranks = this.generateRandomPieceRanks();
 
 		for (let i = 0; i < 21; i++) {
-			const row = Math.floor(i / 9);
-			const col = i % 9;
+			const row = Math.floor(i / 7);
+			const col = i % 7;
 
 			const newRow = playerIndex === 1 ? 5 + row : 2 - row;
-			const newCol = playerIndex === 1 ? col : 8 - col;
+			const newCol = playerIndex === 1 ? col : 7 - col;
 
 			const piece = new Piece(
 				playerIndex,
@@ -174,8 +180,8 @@ class Room {
 
 	generateAIPosition() {
 		this.clearGrid(1);
-		// const newPost = this.generateRandomPiecesPosition(1);
-		const newPost = this.generateFixedPosition();
+		const newPost = this.generateRandomPiecesPosition(1);
+		// const newPost = this.generateFixedPosition();
 
 		newPost.forEach((post, i) => {
 			this.pieces[i + 21].row = post.row;
@@ -191,6 +197,7 @@ class Room {
 		);
 
 		const shuffledActivePieces = Utils.shuffleList(activePieces);
+		// const shuffledActivePieces = activePieces;
 
 		let index = 0;
 
@@ -201,31 +208,6 @@ class Room {
 			const adjacentPositions = Utils.getAdjacent(piece.row, piece.col);
 
 			let availablePositions = [];
-			// adjacentPositions.forEach((position) => {
-			// 	// console.log("pos", position.row, position.col);
-
-			// 	const gridPost = this.tiles[position.row][position.col];
-			// 	if (gridPost.playerIndex !== 1) {
-			// 		availablePositions.push({
-			// 			row: position.row,
-			// 			col: position.col,
-			// 		});
-			// 	}
-			// });
-			// if (availablePositions.length >= 1) {
-			// 	const randomIndex = Math.floor(
-			// 		Math.random() * availablePositions.length
-			// 	);
-			// 	const targetPosition = availablePositions[randomIndex];
-			// 	return {
-			// 		row: targetPosition.row,
-			// 		col: targetPosition.col,
-			// 		pieceIndex: piece.index,
-			// 	};
-			// } else {
-			// 	index++;
-			// 	console.log("c", index);
-			// }
 
 			const position = adjacentPositions[0];
 			if (this.tiles[position.row][position.col].playerIndex !== 1) {
@@ -344,7 +326,7 @@ class Room {
 		const piece = this.pieces[pieceIndex];
 		if (!piece) return;
 
-		console.log("checking..");
+		// console.log("checking..");
 
 		if (piece.isAtThreshold() && piece.rank == 14) {
 			if (this.hasAdjacentOpponentPieces(pieceIndex)) {
@@ -363,6 +345,16 @@ class Room {
 		console.log(
 			`${this.players[winner == 0 ? 1 : 0].username} clock has expired.`
 		);
+	}
+
+	playerSurrender(socketId) {
+		const playerIndex = this.players.findIndex(
+			(player) => player.socketId === socketId
+		);
+		if (playerIndex >= 0) {
+			this.setWinner(playerIndex === 0 ? 1 : 0);
+			console.log(`${this.players[playerIndex].username} surrendered.`);
+		}
 	}
 
 	hasAdjacentOpponentPieces(pieceIndex) {

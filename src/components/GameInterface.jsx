@@ -9,9 +9,18 @@ import {
 	faGear,
 	faCircleXmark,
 	faCircleCheck,
-	faFlag,
 	faXmark,
+	faFlag,
 } from "@fortawesome/free-solid-svg-icons";
+import {
+	faFaceTired,
+	faFaceAngry,
+	faFaceSmile,
+	faFaceGrinTongue,
+	faFaceSurprise,
+	faFaceLaughBeam,
+} from "@fortawesome/free-regular-svg-icons"; // Regular
+
 import PlayerIndicator from "./PlayerIndicator";
 import GamePrompt from "./GamePrompt";
 import gsap from "gsap";
@@ -20,11 +29,27 @@ const GameInterface = ({
 	phase,
 	message,
 	clock,
-	isPlayerTurn,
+	turn,
 	onGameAction,
 }) => {
 	const [gameMenuShown, setGameMenuShown] = useState(false);
 	const [showMessage, setShowMessage] = useState(false);
+	const [emoteDisabled, setEmoteDisabled] = useState(false);
+
+	const [buttonsState, setButtonState] = useState({
+		playerReady: false,
+		playerSurrender: false,
+		leaveGame: false,
+	});
+
+	const buttonEmotes = [
+		faFaceTired,
+		faFaceAngry,
+		faFaceSmile,
+		faFaceGrinTongue,
+		faFaceSurprise,
+		faFaceLaughBeam,
+	];
 
 	useEffect(() => {
 		setTimeout(() => setGameMenuShown(true), 1000);
@@ -80,12 +105,20 @@ const GameInterface = ({
 		return phase !== "prep" || players[0].isReady;
 	}, [players, phase]);
 
-	// console.log("p", players);
-	const handleControlsClick = (action) => {
-		// if (action !== "leaveGame") {
-		// 	closeAnim();
-		// }
+	const handleButtonClick = (action) => {
+		setButtonState((prev) => ({ ...prev, [action]: !prev[action] }));
 		onGameAction({ action: action });
+	};
+
+	const handleSendEmote = (emoteIndex) => {
+		setEmoteDisabled(true);
+		setTimeout(() => setEmoteDisabled(false), 5000); // 2 seconds delay for emote to be disabled again
+		onGameAction({ action: "sendEmote", emoteIndex: emoteIndex });
+	};
+
+	const handleConfimation = (response) => {
+		setShowMessage(false);
+		onGameAction({ action: "playAgain", response: response });
 	};
 
 	return (
@@ -97,10 +130,10 @@ const GameInterface = ({
 						<PlayerIndicator
 							clock={clock}
 							username={players[0].username}
-							isTurn={isPlayerTurn}
-							index={0}
+							isTurn={turn == 0}
 							phase={phase}
 							isReady={players[0].isReady}
+							index={0}
 						/>
 						<div className="absolute sm:relative font-bold text-white h-10 sm:h-2/3 aspect-square border border-red-500 bg-red-600 flex items-center justify-center rounded-full">
 							VS
@@ -108,10 +141,10 @@ const GameInterface = ({
 						<PlayerIndicator
 							clock={clock}
 							username={players[1].username}
-							isTurn={!isPlayerTurn}
-							index={1}
+							isTurn={turn == 1}
 							phase={phase}
 							isReady={players[1].isReady}
+							index={1}
 						/>
 					</div>
 				)}
@@ -121,64 +154,118 @@ const GameInterface = ({
 			{gameMenuShown && (
 				<div
 					ref={controlsRef}
-					className="absolute bottom-14 right-0 bg-gray-200 rounded-t w-20 h-3/5 md:h-[calc(100vh-7rem)] max-h-[400px] overflow-hidden"
+					className="absolute bottom-0 right-0 bg-white rounded-t w-20 h-[340px] lg:h-2/3 overflow-hidden"
 				>
 					<div className="text-center font-bold bg-amber-500 text-white text-xs py-1 select-none">
 						Controls
 					</div>
 					<div className="w-full">
-						<button
-							className={`w-full aspect-square border text-lg border-gray-400 leading-5  ${
-								isReadyButtonDisabled ? "" : "hover:bg-teal-100"
-							}`}
-							onClick={() => handleControlsClick("playerReady")}
-							disabled={isReadyButtonDisabled}
-						>
-							<FontAwesomeIcon
-								icon={faCircleCheck}
-								className={`${
-									isReadyButtonDisabled
-										? "text-gray-500"
-										: "text-green-500"
-								}`}
-							/>
-							<br />
-							<span className="text-sm font-semibold">Ready</span>
-						</button>
-
-						{phase == "main" && (
+						{phase == "prep" && (
 							<button
-								className="w-full aspect-square border text-lg border-gray-400 leading-5 hover:bg-teal-100 "
-								onClick={() => handleControlsClick("playerSurrender")}
+								className={`group w-full py-3 border text-lg border-gray-400 leading-5 ${
+									buttonsState.playerReady
+										? "text-gray-400"
+										: "text-green-700 hover:bg-yellow-50"
+								}`}
+								onClick={() => handleButtonClick("playerReady")}
+								disabled={buttonsState.playerReady}
 							>
-								<FontAwesomeIcon
-									icon={faFlag}
-									className="text-green-600"
-								/>
+								<FontAwesomeIcon icon={faCircleCheck} />
 								<br />
-								<span className="text-sm font-semibold">Surrender</span>
+								<span
+									className={`text-sm font-semibold ${
+										buttonsState.playerReady
+											? "text-gray-400"
+											: "text-gray-700"
+									}`}
+								>
+									Ready
+								</span>
 							</button>
 						)}
 
+						{phase == "main" && (
+							<button
+								className={`group w-full py-3 border text-lg border-gray-400 leading-5 text-slate-500 ${
+									buttonsState.playerSurrender
+										? "text-gray-300"
+										: "hover:bg-yellow-50"
+								}`}
+								onClick={() => handleButtonClick("playerSurrender")}
+								disabled={buttonsState.playerSurrender}
+							>
+								<FontAwesomeIcon icon={faFlag} />
+								<br />
+								<span
+									className={`text-sm font-semibold ${
+										buttonsState.playerSurrender
+											? "text-gray-400"
+											: "text-gray-700"
+									}`}
+								>
+									Surrender
+								</span>
+							</button>
+						)}
 						<button
-							className="w-full aspect-square border text-lg  border-gray-400 leading-5 hover:bg-teal-100"
-							onClick={() => handleControlsClick("leaveGame")}
+							className="w-full py-3 border text-lg  border-gray-400 leading-5 hover:bg-yellow-50"
+							onClick={() => handleButtonClick("leaveGame")}
+							disabled={buttonsState.leaveGame}
 						>
 							<FontAwesomeIcon
 								className="text-red-600"
 								icon={faCircleXmark}
 							/>
 							<br />
-							<span className="text-sm font-semibold">Leave</span>
+							<span
+								className={`text-sm font-semibold ${
+									buttonsState.leaveGame
+										? "text-gray-400"
+										: "text-gray-700"
+								}`}
+							>
+								Leave
+							</span>
 						</button>
+
+						<div className="w-full">
+							<div className="text-center text-xs border border-b border-gray-500 bg-amber-500 font-bold text-white py-0.5">
+								Emotes
+							</div>
+							<div className="flex flex-wrap">
+								{buttonEmotes.map((emote, i) => (
+									<button
+										key={i}
+										className={`group w-1/2 aspect-square text-gray-600 border border-l-0 border-t-0 border-gray-500 ${
+											emoteDisabled
+												? "text-gray-300"
+												: "hover:bg-yellow-50 active:bg-gray-300"
+										}`}
+										onClick={() => handleSendEmote(i)}
+										disabled={emoteDisabled}
+									>
+										<FontAwesomeIcon
+											icon={emote}
+											className={`text-xl ${
+												!emoteDisabled && "group-active:text-lg"
+											}`}
+										/>
+										{/* {emote} */}
+									</button>
+								))}
+							</div>
+						</div>
 					</div>
 				</div>
 			)}
 			<button
-				className="text-white text-2xl rounded-tl-lg bg-amber-500 absolute bottom-0 right-0 w-20 aspect-square"
+				className="text-white bg-amber-500 absolute bottom-0 rounded-t-lg right-0 w-20 py-1 lg:py-3"
 				onClick={handleGameMenuClick}
 			>
-				<FontAwesomeIcon icon={gameMenuShown ? faXmark : faGear} />
+				<FontAwesomeIcon
+					icon={gameMenuShown ? faXmark : faGear}
+					className="text-base lg:text-2xl"
+				/>
 			</button>
 
 			{/* prompt */}
@@ -186,6 +273,7 @@ const GameInterface = ({
 				<GamePrompt
 					message={message}
 					onClose={() => setShowMessage(false)}
+					onConfirm={handleConfimation}
 				/>
 			)}
 		</>

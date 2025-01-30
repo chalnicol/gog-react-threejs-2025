@@ -8,23 +8,11 @@ const PlayerIndicator = ({
 	username,
 	clock,
 }) => {
-	const bgText = useMemo(() => {
-		if (phase === "main") {
-			return isTurn
-				? "bg-green-300 text-black"
-				: "bg-gray-200 text-gray-600";
-		}
-		return "bg-white";
-	}, [isTurn, phase]);
 	const showClock = useMemo(() => {
 		//..
-		if (
-			phase == "prep" &&
-			!isReady &&
-			index == 0 &&
-			clock != null &&
-			clock > 0
-		) {
+		// console.log(clock, phase, isReady, index, "asdf");
+
+		if (phase == "prep" && !isReady && index == 0 && clock > 0) {
 			return true;
 		}
 		if (phase == "main" && isTurn && clock != null && clock > 0) {
@@ -41,7 +29,11 @@ const PlayerIndicator = ({
 
 			<div className="flex ms-auto gap-x-1">
 				{showClock && (
-					<div className="text-[0.7rem] font-bold rounded px-1.5 py-0.5 leading-snug bg-gray-700 text-white flex justify-center items-center">
+					<div
+						className={`text-[0.7rem] font-bold rounded px-1.5 py-0.5 leading-snug  text-white flex justify-center items-center ${
+							clock < 5 ? "bg-red-500" : "bg-gray-500"
+						}`}
+					>
 						{clock}s
 					</div>
 				)}
