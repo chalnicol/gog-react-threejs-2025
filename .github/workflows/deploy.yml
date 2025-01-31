@@ -1,0 +1,33 @@
+name: Deploy to VPS
+
+on:
+  push:
+    branches:
+      - main  # Trigger on push to the "main" branch
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest  # Specifies the runner environment (Ubuntu)
+
+    steps:
+      # Step 1: Checkout the repository
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      # Step 2: Set up SSH for deployment (using private key stored in GitHub Secrets)
+      - name: Set up SSH
+        uses: webfactory/ssh-agent@v0.5.3
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}  # This assumes your private SSH key is stored in GitHub Secrets
+
+      # Step 3: Deploy the code to your VPS using SCP and SSH
+      - name: Deploy to VPS
+        run: |
+          # Copy files to the VPS (replace with your actual VPS details)
+          scp -r . root@145.223.18.113:/var/www/gog-threejs-app
+          
+          # SSH into the VPS and restart the app or run deployment commands
+          ssh -o StrictHostKeyChecking=no root@145.223.18.113 << 'EOF'
+            cd /var/www/gog-threejs-app
+            docker-compose up --build -d  # Example command to deploy using Docker Compose
+          EOF
