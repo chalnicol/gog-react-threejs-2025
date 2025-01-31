@@ -1,0 +1,15 @@
+version: "3.8"
+
+services:
+   app:
+      build:
+         context: .
+         dockerfile: Dockerfile
+      ports:
+         - "3000:3000" # Backend (Express)
+      volumes:
+         - ./node_modules:/app/node_modules # Sync node_modules
+         - ./server:/app/server # Sync backend code
+      environment:
+         - VITE_API_URL=http://localhost:3000 # For frontend to call backend
+      command: "node server/index.js" # Only run the backend

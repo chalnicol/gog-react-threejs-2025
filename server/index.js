@@ -1,10 +1,15 @@
 import express from "express";
 import { Server } from "socket.io";
 import http from "http";
-import path, { join } from "path";
-import { fileURLToPath } from "url";
 import Player from "./Player.js";
 import Room from "./Room.js";
+
+import path from "path";
+import { fileURLToPath } from "url";
+import { dirname } from "path";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 // Create Express and HTTP server
 const app = express();
@@ -12,18 +17,18 @@ const server = http.createServer(app);
 
 const io = new Server(server, {
 	cors: {
-		origin: "http://localhost:5173", // Your Vite server URL
+		origin: "*", // Allow all origins for now (adjust for production)
 		methods: ["GET", "POST"],
-		allowedHeaders: ["Content-Type"],
-		credentials: true, // Allow credentials (cookies, authentication)
 	},
 });
 
-// For serving static files (e.g., React build)
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+app.use(express.static(path.join(__dirname, "../dist")));
 
-app.use(express.static(path.join(__dirname, "dist")));
+app.get("*", (req, res) => {
+	res.sendFile(path.resolve(__dirname, "../dist", "index.html"));
+});
+
+const PORT = process.env.SOCKET_PORT || 3000;
 
 //game codes..
 const players = {};
@@ -989,6 +994,6 @@ io.on("connection", (socket) => {
 	});
 });
 
-server.listen(3000, () => {
-	console.log("Server listening on http://localhost:3000");
+server.listen(PORT, () => {
+	console.log(`Server listening on port ${PORT}`);
 });
