@@ -16,8 +16,8 @@ class Room {
 		this.roundsPlayed = 0;
 		this.turn = 0;
 		this.phase = "";
-		this.prepTime = type === "classic" ? 0 : 5; //seconds
-		this.turnTime = type === "classic" ? 0 : 10;
+		this.prepTime = type === "classic" ? 0 : 15; //seconds
+		this.turnTime = type === "classic" ? 0 : 30;
 		this.timer = null;
 		this.pieces = [];
 		this.tiles = [];
@@ -29,13 +29,8 @@ class Room {
 		this.addPlayer(host);
 	}
 
-	getPlayers(index = 0) {
-		return index === 0 ? this.players : [...this.players].reverse();
-	}
-
-	getTurn(playerIndex = 0) {
-		// return this.players[playerIndex].turn === this.turn;
-		return playerIndex === 0 ? (this.turn == 0 ? 1 : 0) : this.turn;
+	isTurn(playerIndex = 0) {
+		return this.players[playerIndex].turn === this.turn;
 	}
 
 	getMove(index) {
@@ -103,6 +98,23 @@ class Room {
 			? "Congrats, You win! Play again?"
 			: "Sorry, You lose. Play again?";
 	}
+
+	getPlayers(index = 0) {
+		const toSendPlayersData = this.players.map(
+			({ id, username, isReady, playAgain }) => ({
+				id,
+				username,
+				isReady,
+				playAgain,
+			})
+		);
+
+		return index == 0 ? toSendPlayersData : [...toSendPlayersData].reverse();
+	}
+
+	getFieldColor(index = 0) {
+		return this.players[index].fieldColor;
+	}
 	initGame() {
 		// Initialize game logic here
 		this.setPlayersTurn();
@@ -133,7 +145,7 @@ class Room {
 			const col = i % 7;
 
 			const newRow = playerIndex === 1 ? 5 + row : 2 - row;
-			const newCol = playerIndex === 1 ? col : 7 - col;
+			const newCol = playerIndex === 1 ? 1 + col : 7 - col;
 
 			const piece = new Piece(
 				playerIndex,
@@ -249,7 +261,6 @@ class Room {
 		const player =
 			this.players.find((plyr) => plyr.socketId === socketId) || null;
 
-		// console.log("isMoveGood", this.isMoveGood(socketId, data));
 		if (
 			!player ||
 			(this.phase == "main" && player.turn !== this.turn) ||
@@ -372,8 +383,31 @@ class Room {
 		return false;
 	}
 
-	addRound() {
+	resetGame() {
 		this.roundsPlayed++;
+		this.isFinished = false;
+		this.phase = "";
+		this.winner = -1;
+		this.move = null;
+
+		//reset players data..
+		this.players.forEach((player) => {
+			player.gameReset();
+		});
+
+		//reset pieces..
+		this.setPlayersTurn();
+
+		//reset tiles
+		this.tiles.forEach((innerTiles) => {
+			innerTiles.forEach((tile) => {
+				tile.clear();
+			});
+		});
+		//
+		this.pieces = [];
+		this.initPlayerPieces(0);
+		this.initPlayerPieces(1);
 	}
 
 	switchTurn() {
@@ -384,6 +418,15 @@ class Room {
 		if (playerIndex >= 0 && this.players[playerIndex].isReached) {
 			this.setWinner(playerIndex);
 		}
+	}
+
+	playAgain(socketId, response) {
+		const playerIndex = this.players[0].socketId === socketId ? 0 : 1;
+		this.players[playerIndex].playAgain = response == "yes";
+	}
+
+	bothPlayersWannaPlayAgain() {
+		return this.players[0].playAgain && this.players[1].playAgain;
 	}
 
 	setPlayersTurn() {

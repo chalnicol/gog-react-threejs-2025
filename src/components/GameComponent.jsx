@@ -8,9 +8,10 @@ const GameComponent = ({ gameUpdates, onGameAction }) => {
 	//
 	const [players, setPlayers] = useState([]);
 	const [clock, setClock] = useState(null);
-	const [turn, setTurn] = useState(-1);
+	const [isTurn, setIsTurn] = useState(false);
 	const [phase, setPhase] = useState("");
 	const [message, setMessage] = useState(null);
+	const [emote, setEmote] = useState(null);
 
 	const gameRef = useRef(null);
 	const containerRef = useRef(null);
@@ -19,8 +20,9 @@ const GameComponent = ({ gameUpdates, onGameAction }) => {
 	useEffect(() => {
 		if (gameUpdates) {
 			// console.log(gameUpdates);
-			if (gameUpdates.turn >= 0) {
-				setTurn(gameUpdates.turn);
+			if (gameUpdates.isTurn !== null && gameUpdates.isTurn !== undefined) {
+				console.log("switch turn..");
+				setIsTurn(gameUpdates.isTurn);
 			}
 			if (gameUpdates.phase) {
 				setPhase(gameUpdates.phase);
@@ -29,11 +31,17 @@ const GameComponent = ({ gameUpdates, onGameAction }) => {
 				setMessage(gameUpdates.message);
 			}
 			if (gameUpdates.players) {
+				console.log("p", gameUpdates.players);
+
 				setPlayers(gameUpdates.players);
 			}
 			if (gameUpdates.clock >= 0) {
 				setClock(gameUpdates.clock);
-				console.log("c", gameUpdates.clock);
+				// console.log("c", gameUpdates.clock);
+			}
+			if (gameUpdates.emote != null) {
+				setEmote(gameUpdates.emote);
+				console.log("e", gameUpdates.emote);
 			}
 		}
 	}, [gameUpdates]);
@@ -44,11 +52,12 @@ const GameComponent = ({ gameUpdates, onGameAction }) => {
 
 			<GameInterface
 				players={players}
-				turn={turn}
+				isTurn={isTurn}
 				clock={clock}
 				message={message}
 				phase={phase}
 				onGameAction={onGameAction}
+				emote={emote}
 			/>
 		</div>
 	);

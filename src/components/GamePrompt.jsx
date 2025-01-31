@@ -62,7 +62,7 @@ const GamePrompt = ({ message, onClose, onConfirm }) => {
 		<>
 			<div
 				ref={promptRef}
-				className="scale-0 absolute flex w-11/12 max-w-xl left-[50%] translate-x-[-50%] bg-[#ffff0066] border-2 border-yellow-300 text-white top-36 sm:top-16 px-5 py-4 min-h-20 rounded-lg"
+				className="scale-0 absolute flex w-11/12 max-w-xl left-[50%] translate-x-[-50%] bg-[#ffff0044] border-2 border-yellow-200 text-white top-36 sm:top-16 px-5 py-4 min-h-20 rounded-lg"
 			>
 				<div className="me-3 leading-snug">
 					<span className="font-semibold leading-5">{message?.text}</span>
@@ -70,13 +70,13 @@ const GamePrompt = ({ message, onClose, onConfirm }) => {
 					{withButtons && (
 						<div className="w-full space-x-2 mt-3">
 							<button
-								className="py-1 w-20 border border-yellow-300 text-yellow-300 rounded font-semibold hover:border-white hover:text-white"
+								className="py-1 w-20 border border-white text-white rounded font-semibold hover:border-yellow-200 hover:text-yellow-200"
 								onClick={() => onConfirm("yes")}
 							>
 								Yes
 							</button>
 							<button
-								className="py-1 w-20 border border-yellow-300 text-yellow-300 rounded font-semibold hover:border-white hover:text-white"
+								className="py-1 w-20 border border-white text-white rounded font-semibold hover:border-yellow-200 hover:text-yellow-200"
 								onClick={() => onConfirm("no")}
 							>
 								No

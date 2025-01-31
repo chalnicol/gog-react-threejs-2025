@@ -49,6 +49,35 @@ class ThreeJSGame extends EventEmitter {
 		this.animate();
 	}
 
+	reset(piecesData = []) {
+		//..
+		this.tiles.forEach((tile) => tile.clear());
+		this.pieces.forEach((piece) => {
+			this.scene.remove(piece.mesh);
+			piece.mesh.children.forEach((child) => {
+				if (child.geometry) {
+					child.geometry.dispose();
+				}
+				if (child.material) {
+					if (Array.isArray(child.material)) {
+						child.material.forEach((mat) => mat.dispose());
+					} else {
+						child.material.dispose();
+					}
+				}
+			});
+			piece.mesh.clear();
+		});
+
+		this.pieces = [];
+		this.clickablePieces = [];
+		this.toMovePiece = null;
+		this.gamePhase = "prep";
+		this.capturedPieces = [new Array(), new Array()];
+
+		setTimeout(() => this.createPlayerPieces(0, piecesData), 500);
+	}
+
 	setupCameraAndControls() {
 		this.camera.position.set(0, 5, 6);
 		this.camera.lookAt(0, 0, 0);
@@ -421,9 +450,9 @@ class ThreeJSGame extends EventEmitter {
 	}
 
 	setPlayerPiecesEnabled(enabled = true) {
-		this.pieces
-			.filter((piece) => piece.playerIndex === 0)
-			.forEach((piece) => (piece.isEnabled = enabled));
+		this.pieces.forEach((piece) => {
+			piece.isEnabled = enabled;
+		});
 	}
 
 	endPrep(oppoPiecesData = []) {

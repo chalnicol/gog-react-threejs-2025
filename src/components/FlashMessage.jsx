@@ -12,9 +12,9 @@ const FlashMessage = ({ status, onClose }) => {
 	useEffect(() => {
 		if (status !== null) {
 			clearTimeout(timerRef.current);
-			// timerRef.current = setTimeout(() => {
-			// 	onClose();
-			// }, 3000);
+			timerRef.current = setTimeout(() => {
+				onClose();
+			}, 3000);
 		} else {
 			clearTimeout(timerRef.current);
 			timerRef.current = null;

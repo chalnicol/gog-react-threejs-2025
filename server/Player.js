@@ -13,6 +13,7 @@ class Player {
 		this.fieldColor = 0;
 		this.isReady = false;
 		this.isReached = false;
+		this.playAgain = false;
 	}
 
 	setRoom(roomId) {
@@ -30,11 +31,20 @@ class Player {
 	leaveRoom() {
 		this.roomId = "";
 		this.status = "idle";
-		this.turn = 0;
+		this.reset();
+	}
+
+	gameReset() {
+		this.isReady = false;
+		this.isReached = false;
+		this.playAgain = false;
+	}
+	reset() {
 		this.wins = 0;
 		this.loss = 0;
+		this.turn = 0;
 		this.fieldColor = 0;
-		this.isReady = false;
+		this.gameReset();
 	}
 }
 

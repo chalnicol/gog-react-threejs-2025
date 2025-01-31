@@ -45,12 +45,19 @@ const Game = React.memo(({ gameUpdates, onGameAction }) => {
 			}
 			if (gameUpdates.event === "switchTurn") {
 				//
+				// console.log(gameUpdates.isTurn);
 				gameRef.current.setPlayerPiecesEnabled(gameUpdates.isTurn);
 			}
 			if (gameUpdates.event === "endGame") {
 				//
 				gameRef.current.showOpponentRanks(gameUpdates.oppoPiecesRanks);
 				gameRef.current.setPlayerPiecesEnabled(false);
+			}
+
+			if (gameUpdates.event === "resetGame") {
+				//
+				console.log("game resets..");
+				gameRef.current.reset(gameUpdates.playerPieces);
 			}
 		}
 	}, [gameUpdates]);

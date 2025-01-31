@@ -83,15 +83,16 @@ const initGame = (roomId) => {
 
 	let toSendData = [];
 
-	room.players.forEach((player, i) => {
+	// room.players.forEach((player, i) => {
+	for (let i = 0; i < 2; i++) {
 		const mirrored = i == 0 ? true : false;
 		toSendData.push({
 			event: "initGame",
 			players: room.getPlayers(i),
-			fieldColor: player.fieldColor,
+			fieldColor: room.getFieldColor(i),
 			playerPieces: room.getPieces(mirrored, true, i),
 		});
-	});
+	}
 
 	emitData(roomId, toSendData, true);
 };
@@ -134,6 +135,7 @@ const startClock = (roomId) => {
 			//perfom action when clock ends..
 			clearInterval(timers[roomId]);
 			if (room.phase === "prep") {
+				clearInterval(timers[roomId]);
 				endPrep(roomId);
 			} else {
 				endGame(roomId, true);
@@ -147,16 +149,16 @@ const endPrep = (roomId) => {
 	const room = rooms[roomId];
 	room.endPrep();
 
-	if (room.type === "blitz") {
-		clearInterval(timers[roomId]);
-	}
+	// if (room.type === "blitz") {
+	// 	clearInterval(timers[roomId]);
+	// }
 
 	setTimeout(() => startGame(roomId), 3000);
 
 	//..
 	let toSendData = [];
 
-	room.players.forEach((player, i) => {
+	for (let i = 0; i < 2; i++) {
 		toSendData.push({
 			event: "endPrep",
 			players: room.getPlayers(i),
@@ -169,7 +171,7 @@ const endPrep = (roomId) => {
 				text: "Game commencing.. Ready to play!",
 			},
 		});
-	});
+	}
 
 	// console.log(room.pieces);
 	emitData(roomId, toSendData, true);
@@ -191,11 +193,11 @@ const startGame = (roomId) => {
 	}
 
 	let toSendData = [];
-	for (let i = 0; i < room.players.length; i++) {
+	for (let i = 0; i < 2; i++) {
 		toSendData.push({
 			event: "startGame",
 			clock: room.turnTime,
-			turn: room.getTurn(i),
+			isTurn: room.isTurn(i),
 			phase: "main",
 			message: {
 				toConfirm: false,
@@ -228,7 +230,7 @@ const endGame = (roomId, clockExpired = false) => {
 				toConfirm: true,
 				text: room.getWinningPromptMessage(i),
 			},
-			players: i == 0 ? room.players : [...room.players].reverse(),
+			players: getPlayer(i),
 			oppoPiecesRanks: room.getPiecesRanks(i == 0 ? 1 : 0),
 		});
 	}
@@ -256,16 +258,34 @@ const switchTurn = (roomId) => {
 	}
 
 	let toSendData = [];
-	room.players.forEach((p, i) => {
+	for (let i = 0; i < 2; i++) {
 		toSendData.push({
 			event: "switchTurn",
-			turn: room.getTurn(i),
+			isTurn: room.isTurn(i),
 			clock: room.turnTime,
 		});
-	});
+	}
 
 	emitData(roomId, toSendData, true);
 	// console.log(`Game: ${roomId} switch turn.`);
+};
+
+const resetGame = (roomId) => {
+	const room = rooms[roomId];
+	if (!room) return;
+	room.resetGame();
+
+	setTimeout(() => startPrep(roomId), 1500);
+
+	let toSendData = [];
+	for (let i = 0; i < 2; i++) {
+		const mirrored = i == 0 ? true : false;
+		toSendData.push({
+			event: "resetGame",
+			playerPieces: room.getPieces(mirrored, true, i),
+		});
+	}
+	emitData(roomId, toSendData, true);
 };
 
 const sendPlayerMove = (roomId) => {
@@ -336,30 +356,36 @@ const createRoom = (socketId, type, isPrivate, allowSpectators, vsAi) => {
 const leaveRoom = (socketId) => {
 	const player = players[socketId];
 
+	if (!player) return;
+
 	const room = rooms[player.roomId];
 
-	if (player && room) {
-		const roomId = room.id;
-		const username = player.username;
+	if (!player || !room) return;
 
-		player.leaveRoom();
+	const roomId = room.id;
+	const username = player.username;
 
-		room.removePlayer(socketId);
+	player.leaveRoom();
 
-		clearInterval(timers[room.id]);
-		clearTimeout(timers[room.id]);
+	room.removePlayer(socketId);
 
-		if (!room.vsAi && room.players.length > 0) {
-			emitData(room.id, {
-				event: "playerLeave",
-				message: `${username} has left the game.`,
-			});
-		} else {
-			//delete room..
-			delete rooms[roomId];
-		}
-		console.log(`${username} has left a room.`);
+	clearInterval(timers[room.id]);
+	clearTimeout(timers[room.id]);
+
+	if (!room.vsAi && room.players.length > 0) {
+		emitData(room.id, {
+			event: "playerLeave",
+			phase: "end",
+			message: {
+				toConfirm: false,
+				text: `${username} has left the game.`,
+			},
+		});
+	} else {
+		//delete room..
+		delete rooms[roomId];
 	}
+	console.log(`${username} has left a game.`);
 };
 
 const getAvailableRoom = (type, socketId) => {
@@ -385,6 +411,10 @@ const playerReady = (socketId) => {
 
 		if (room.bothPlayersReady()) {
 			//..end preparations..
+
+			if (room.type === "blitz") {
+				clearInterval(timers[room.id]);
+			}
 			endPrep(room.id);
 		} else {
 			//emits players ready while waiting for other player to get ready..
@@ -399,11 +429,13 @@ const playerReady = (socketId) => {
 
 const playerMove = (socketId, data) => {
 	const player = players[socketId];
-	const room = rooms[player.roomId];
+	if (!player) return;
 
-	if (!player || !room) return;
+	const room = rooms[player.roomId];
+	if (!room) return;
 
 	if (!room.isFinished && room.isValidMove(socketId, data)) {
+		// console.log("player move..");
 		room.setPlayerMove(socketId, data);
 		proceed(room.id);
 	}
@@ -420,14 +452,57 @@ const playerSurrender = (socketId) => {
 	endGame(room.id);
 };
 
-const showGrid = (tiles) => {
-	tiles.forEach((innerTiles) => {
-		let str = "";
-		innerTiles.forEach((tile) => {
-			str += `[${tile.pieceIndex == null ? "-" : tile.playerIndex}] `;
+const sendEmote = (socketId, emoteIndex) => {
+	const player = players[socketId];
+	const room = rooms[player.roomId];
+
+	if (!player || !room) return;
+
+	const playerIndex = room.players[0].socketId === socketId ? 0 : 1;
+	const reverse = playerIndex == 0 ? 1 : 0;
+
+	let toSendData = [];
+	for (let i = 0; i < 2; i++) {
+		toSendData.push({
+			event: "sendEmote",
+			emote: {
+				index: emoteIndex,
+				playerIndex: i == 0 ? playerIndex : reverse,
+			},
 		});
-		console.log(str);
-	});
+	}
+	emitData(room.id, toSendData, true);
+};
+
+const playAgain = (socketId, response) => {
+	const player = players[socketId];
+
+	if (!player) return;
+	const room = rooms[player.roomId];
+
+	if (!player || !room) return;
+
+	// console.log("r", response);
+	room.playAgain(socketId, response);
+
+	if (room.vsAi) {
+		room.players[1].playAgain = response == "yes";
+	}
+
+	if (room.bothPlayersWannaPlayAgain()) {
+		console.log("b", "both playing.. again ");
+		setTimeout(() => resetGame(socketId), 500);
+	}
+
+	//..
+	let toSendData = [];
+	for (let i = 0; i < 2; i++) {
+		toSendData.push({
+			event: "playAgain",
+			players: room.getPlayers(i),
+		});
+	}
+	emitData(room.id, toSendData, true);
 };
 
 const aiMove = (roomId) => {
@@ -877,6 +952,12 @@ io.on("connection", (socket) => {
 				break;
 			case "playerSurrender":
 				playerSurrender(socket.id);
+				break;
+			case "sendEmote":
+				sendEmote(socket.id, data.emoteIndex);
+				break;
+			case "playAgain":
+				playAgain(socket.id, data.response);
 				break;
 			default:
 		}
