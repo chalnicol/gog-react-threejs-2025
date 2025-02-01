@@ -13,6 +13,12 @@ jobs:
       # Step 1: Checkout the repository
       - name: Checkout code
         uses: actions/checkout@v2
+        
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build project
+        run: npm run build  # This step will generate the dist folder
 
       # Step 2: Add VPS to known hosts to avoid SSH prompts
       - name: Add VPS to known hosts
