@@ -126,6 +126,7 @@ class Room {
 	initGame() {
 		// Initialize game logic here
 		this.setPlayersTurn();
+		this.resetPlayers();
 		//..
 		this.initGrid();
 		this.initPlayerPieces(0);
@@ -391,6 +392,14 @@ class Room {
 		return false;
 	}
 
+	resetPlayers() {
+		this.players.forEach((player) => {
+			player.isReady = false;
+			player.isReached = false;
+			player.playAgain = false;
+		});
+	}
+
 	resetGame() {
 		this.roundsPlayed++;
 		this.isFinished = false;
@@ -398,7 +407,7 @@ class Room {
 		this.winner = -1;
 		this.move = null;
 
-		//reset players data..
+		//
 		this.players.forEach((player) => {
 			player.gameReset();
 		});

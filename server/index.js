@@ -287,6 +287,7 @@ const resetGame = (roomId) => {
 		const mirrored = i == 0 ? true : false;
 		toSendData.push({
 			event: "resetGame",
+			players: room.getPlayers(i),
 			playerPieces: room.getPieces(mirrored, true, i),
 		});
 	}

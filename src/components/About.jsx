@@ -73,13 +73,15 @@ const About = () => {
 
 					<div className="flex gap-x-3">
 						<a
-							href="mailto:charlouenicolas@gmail.com"
+							href="https://www.facebook.com/charlou.nicolas"
 							className="text-blue-800 hover:text-blue-600"
+							target="_blank"
+							rel="noopener noreferrer"
 						>
-							Email
+							Facebook
 						</a>
 						<a
-							href="https://github.com/charlouenicolas"
+							href="https://github.com/chalnicol"
 							target="_blank"
 							rel="noopener noreferrer"
 							className="text-blue-800 hover:text-blue-600"
@@ -87,7 +89,7 @@ const About = () => {
 							Github
 						</a>
 						<a
-							href="https://www.linkedin.com/in/charlouenicolas/"
+							href="https://www.linkedin.com/in/charlou-nicolas-ba201432/"
 							target="_blank"
 							rel="noopener noreferrer"
 							className="text-blue-800 hover:text-blue-600"

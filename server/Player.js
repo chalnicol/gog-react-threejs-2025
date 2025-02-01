@@ -38,6 +38,7 @@ class Player {
 		this.isReady = false;
 		this.isReached = false;
 		this.playAgain = false;
+		// console.log("player reset");
 	}
 	reset() {
 		this.wins = 0;

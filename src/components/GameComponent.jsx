@@ -20,8 +20,9 @@ const GameComponent = ({ gameUpdates, onGameAction }) => {
 	useEffect(() => {
 		if (gameUpdates) {
 			// console.log(gameUpdates);
+
 			if (gameUpdates.isTurn !== null && gameUpdates.isTurn !== undefined) {
-				console.log("switch turn..");
+				// console.log("switch turn..");
 				setIsTurn(gameUpdates.isTurn);
 			}
 			if (gameUpdates.phase) {
@@ -31,8 +32,7 @@ const GameComponent = ({ gameUpdates, onGameAction }) => {
 				setMessage(gameUpdates.message);
 			}
 			if (gameUpdates.players) {
-				console.log("p", gameUpdates.players);
-
+				// console.log("p", gameUpdates.players);
 				setPlayers(gameUpdates.players);
 			}
 			if (gameUpdates.clock >= 0) {
@@ -41,7 +41,7 @@ const GameComponent = ({ gameUpdates, onGameAction }) => {
 			}
 			if (gameUpdates.emote != null) {
 				setEmote(gameUpdates.emote);
-				console.log("e", gameUpdates.emote);
+				// console.log("e", gameUpdates.emote);
 			}
 		}
 	}, [gameUpdates]);

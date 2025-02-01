@@ -79,6 +79,7 @@ const GameInterface = ({
 			});
 		}
 	}, [phase]);
+
 	const closeAnim = () => {
 		gsap.to(controlsRef.current, {
 			yPercent: 100,

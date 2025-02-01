@@ -51,7 +51,7 @@ class ThreeJSGame extends EventEmitter {
 
 	reset(piecesData = []) {
 		//..
-		this.tiles.forEach((tile) => tile.clear());
+		this.tiles.forEach((tile) => tile.clearIndexes());
 		this.pieces.forEach((piece) => {
 			this.scene.remove(piece.mesh);
 			piece.mesh.children.forEach((child) => {
