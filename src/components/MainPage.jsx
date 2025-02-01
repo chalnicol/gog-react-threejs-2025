@@ -41,7 +41,11 @@ const MainPage = ({ playerName }) => {
 	const socketRef = useRef(null);
 
 	useEffect(() => {
-		const socketInstance = io("http://localhost:3000");
+		// const socketInstance = io("http://localhost:3000");
+		const socketInstance = io(
+			import.meta.env.VITE_API_URL || "http://localhost:3000"
+		);
+
 		setSocket(socketInstance);
 
 		socketInstance.emit("join", playerName);
