@@ -18,7 +18,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: 16  # Match the Node.js version in Dockerfile
+          node-version: 18  # Match the Node.js version in Dockerfile
 
       # Step 3: Install dependencies & build project
       - name: Install dependencies
