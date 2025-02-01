@@ -15,5 +15,5 @@ services:
          - gog-threejs-app_network
 
 networks:
-   gog-threejs-app_network:
-      name: gog-threejs-app_default # This ensures the correct label is applied to the network
+   gog-threejs-app_network: # Define the network properly
+      driver: bridge
