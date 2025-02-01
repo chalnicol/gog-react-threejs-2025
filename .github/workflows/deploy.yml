@@ -14,25 +14,39 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
 
+      # Step 2: Install Node.js
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 16  # Match the Node.js version in Dockerfile
+
+      # Step 3: Install dependencies & build project
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build project
+        run: npm run build  # Ensure 'dist' folder is created
+
+      # Step 4: Add VPS to known hosts
       - name: Add VPS to known hosts
         run: |
           mkdir -p ~/.ssh
           ssh-keyscan -H 145.223.18.113 >> ~/.ssh/known_hosts
-          
-      # Step 2: Set up SSH for deployment (using private key stored in GitHub Secrets)
+
+      # Step 5: Set up SSH for deployment
       - name: Set up SSH
         uses: webfactory/ssh-agent@v0.5.3
         with:
           ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}  # This assumes your private SSH key is stored in GitHub Secrets
 
-      # Step 3: Deploy the code to your VPS using SCP and SSH
+      # Step 6: Deploy the built files to VPS
       - name: Deploy to VPS
         run: |
-          # Copy files to the VPS (replace with your actual VPS details)
-          scp -r . root@145.223.18.113:/var/www/gog-threejs-app
+          # Copy files to the VPS (excluding node_modules)
+          rsync -avz --exclude='node_modules' --exclude='.git' --delete . root@145.223.18.113:/var/www/gog-threejs-app
           
-          # SSH into the VPS and restart the app or run deployment commands
+          # SSH into VPS and deploy
           ssh -o StrictHostKeyChecking=no root@145.223.18.113 << 'EOF'
             cd /var/www/gog-threejs-app
-            docker-compose up --build -d  # Example command to deploy using Docker Compose
+            docker-compose up --build -d  # Start/restart Docker containers
           EOF
