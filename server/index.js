@@ -320,7 +320,14 @@ const emitData = (roomId, data, isSeparate = false) => {
 	});
 };
 
-const createRoom = (socketId, type, isPrivate, allowSpectators, vsAi) => {
+const createRoom = (
+	socketId,
+	type,
+	isPrivate,
+	allowSpectators,
+	playerInvited,
+	vsAi
+) => {
 	const host = players[socketId];
 
 	if (!host) return;
@@ -332,6 +339,7 @@ const createRoom = (socketId, type, isPrivate, allowSpectators, vsAi) => {
 			type,
 			isPrivate,
 			allowSpectators,
+			playerInvited,
 			vsAi
 		);
 		rooms[socketId] = newRoom;
@@ -604,9 +612,6 @@ io.on("connection", (socket) => {
 			return;
 		}
 
-		//create the room and add to list..
-		createRoom(socket.id, type, isPrivate, allowSpectators, false);
-
 		//send invite if playerInvited is 	present
 		if (playerInvited !== "" && invited !== null) {
 			const senderData = {
@@ -651,6 +656,17 @@ io.on("connection", (socket) => {
 
 			console.log("invite has been sent to ", invited.username);
 		}
+
+		//create the room and add to list..
+		createRoom(
+			socket.id,
+			type,
+			isPrivate,
+			allowSpectators,
+			playerInvited,
+			false
+		);
+
 		//send status success..
 		socket.emit("createRoomSuccess", {
 			success: "Game room has been created successfully!",
@@ -767,6 +783,8 @@ io.on("connection", (socket) => {
 		const player = players[socket.id];
 
 		const room = rooms[id];
+
+		console.log("i", room.playerInvitedId);
 
 		if (room && player && player.id === room.playerInvitedId) {
 			//remove the invited player from the room..
@@ -930,7 +948,7 @@ io.on("connection", (socket) => {
 			}, interval);
 		} else {
 			//type : vsAI
-			createRoom(socket.id, type, true, false, true);
+			createRoom(socket.id, type, true, false, "", true);
 
 			initGame(socket.id);
 

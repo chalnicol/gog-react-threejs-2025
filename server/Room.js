@@ -4,12 +4,20 @@ import Tiles from "./Tiles.js";
 import Move from "./Move.js";
 
 class Room {
-	constructor(id, host, type, isPrivate, allowSpectators, vsAi) {
+	constructor(
+		id,
+		host,
+		type,
+		isPrivate,
+		allowSpectators,
+		playerInvitedId,
+		vsAi
+	) {
 		this.id = id; // Unique ID
 		this.allowSpectators = allowSpectators; // Whether spectators are allowed or not
 		this.type = type;
 		this.isPrivate = isPrivate;
-		this.playerInvitedId = "";
+		this.playerInvitedId = playerInvitedId;
 		this.status = "open";
 		this.vsAi = vsAi;
 		this.players = [];
