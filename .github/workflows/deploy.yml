@@ -1,0 +1,47 @@
+name: Deploy to VPS
+
+on:
+  push:
+    branches:
+      - main  # Trigger on push to the "main" branch
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest  # Specifies the runner environment (Ubuntu)
+
+    steps:
+      # Step 1: Checkout the repository
+      - name: Checkout code
+        uses: actions/checkout@v2
+        
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build project
+        run: npm run build  # This step will generate the dist folder
+
+      # Step 2: Add VPS to known hosts to avoid SSH prompts
+      - name: Add VPS to known hosts
+        run: |
+          mkdir -p ~/.ssh
+          ssh-keyscan -H 145.223.18.113 >> ~/.ssh/known_hosts
+
+      # Step 3: Set up SSH for deployment
+      - name: Set up SSH
+        uses: webfactory/ssh-agent@v0.5.3
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}  # This assumes your private SSH key is stored in GitHub Secrets
+
+      # Step 4: Deploy to VPS
+      - name: Deploy to VPS
+        run: |
+          # Copy files to the VPS (excluding node_modules)
+          rsync -avz --exclude='node_modules' --exclude='.git' --delete . root@145.223.18.113:/var/www/gog-threejs-app
+          
+          # SSH into VPS and rebuild Docker containers
+          ssh -o StrictHostKeyChecking=no root@145.223.18.113 << 'EOF'
+            cd /var/www/gog-threejs-app  # Navigate to your project directory
+            git pull origin main  # Pull the latest changes
+            docker-compose down  # Stop existing containers
+            docker-compose up --build -d  # Rebuild and start the containers
+          EOF
