@@ -10,7 +10,7 @@ import PlayersTable from "./PlayersTable";
 import ChatBox from "./ChatBox";
 import InvitePlayerModal from "./InvitePlayerModal";
 import LoadingScreen from "./LoadingScreen";
-
+import GuideAndGameRules from "./GuideAndGameRules";
 import GameComponent from "./GameComponent";
 
 import { io } from "socket.io-client";
@@ -186,7 +186,8 @@ const MainPage = ({ playerName }) => {
 		{ id: 2, name: "players", label: "View Online Players" },
 		{ id: 3, name: "rooms", label: "View All Games" },
 		{ id: 4, name: "chats", label: "Chats" },
-		{ id: 5, name: "about", label: "About" },
+		{ id: 5, name: "guides", label: "Guide & Game Rules" },
+		{ id: 6, name: "about", label: "About" },
 	];
 
 	const updateSentMessage = (data) => {
@@ -515,6 +516,9 @@ const MainPage = ({ playerName }) => {
 
 						{/* about page */}
 						{content === "about" && <About />}
+
+						{/* settings page */}
+						{content === "guides" && <GuideAndGameRules />}
 					</div>
 				</div>
 

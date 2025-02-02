@@ -24,7 +24,7 @@ class Room {
 		this.roundsPlayed = 0;
 		this.turn = 0;
 		this.phase = "";
-		this.prepTime = type === "classic" ? 0 : 15; //seconds
+		this.prepTime = type === "classic" ? 0 : 45; //seconds
 		this.turnTime = type === "classic" ? 0 : 30;
 		this.timer = null;
 		this.pieces = [];

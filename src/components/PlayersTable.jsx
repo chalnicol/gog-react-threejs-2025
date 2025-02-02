@@ -15,7 +15,7 @@ const PlayersTable = ({ players, userId, onAddChatClick }) => {
 						<tr>
 							<th className="text-left p-2">User ID</th>
 							<th className="text-left p-2">Username</th>
-							<th className="text-left p-2">Credits</th>
+							{/* <th className="text-left p-2">Credits</th> */}
 							<th className="text-left p-2">Status</th>
 							<th className="text-left p-2">Actions</th>
 						</tr>
@@ -42,7 +42,7 @@ const PlayersTable = ({ players, userId, onAddChatClick }) => {
 									</div>
 								</td>
 								{/* <td className="p-2">{player.credits}</td> */}
-								<td className="p-2">TBD</td>
+								{/* <td className="p-2">TBD</td> */}
 
 								<td className="p-2">
 									{player.status == "playing" && (
