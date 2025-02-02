@@ -2,17 +2,8 @@ import React from "react";
 
 const GuideAndGameRules = () => {
 	return (
-		<div className="p-6 rounded-md max-w-6xl mx-auto">
-			<div className="p-3 border border-gray-500 rounded text-sm bg-gray-50 mb-4">
-				<h5 className="font-semibold">Note:</h5>
-				<p className="text-gray-700">
-					The game does not save any progress. Once the browser is closed,
-					all progress is lost. Players will need to start fresh each time
-					they enter the game.
-				</p>
-			</div>
-
-			<h1 className="text-2xl font-bold mb-4 border border-gray-500 rounded py-2 bg-gray-200 px-4">
+		<div className="p-6 rounded-md max-w-6xl mx-auto bg-gray-100">
+			<h1 className="text-2xl font-bold mb-4 rounded py-2 bg-gray-700 text-white px-4">
 				Game Guide & Rules
 			</h1>
 
@@ -397,7 +388,16 @@ const GuideAndGameRules = () => {
 				</ul>
 			</section>
 
-			<div className="text-center mt-12 mb-2">-- End --</div>
+			<div className="p-3 border border-gray-500 rounded text-sm bg-gray-50 mb-8 mt-10">
+				<h5 className="font-semibold">Note:</h5>
+				<p className="text-gray-700">
+					The game does not save any progress. Once the browser is closed,
+					all progress is lost. Players will need to start fresh each time
+					they enter the game.
+				</p>
+			</div>
+
+			{/* <div className="text-center  mb-2">-- End --</div> */}
 		</div>
 	);
 };
