@@ -128,12 +128,12 @@ const PlayerIndicator = ({
 			{showEmote && (
 				<div
 					ref={emoteRef}
-					className={`absolute w-14 rounded aspect-square z-50mt-1 top-full flex flex-col ${
+					className={`absolute w-14 rounded aspect-square z-50 top-full flex flex-col ${
 						index == 0 ? "left-0" : "right-0"
 					}`}
 				>
-					<div className="w-0 h-0 border-l-[5px] border-r-[5px] border-b-[10px] ms-2 border-transparent border-b-white"></div>
-					<div className="flex items-center justify-center bg-white flex-1 rounded">
+					<div className="w-0 h-0 border-l-[5px] border-r-[5px] border-b-[10px] ms-2 border-transparent border-b-gray-300"></div>
+					<div className="flex items-center justify-center bg-gray-200 flex-1 rounded  border-2 border-gray-300 shadow">
 						<FontAwesomeIcon icon={emotes[emoteIndex]} size="2xl" />
 					</div>
 				</div>

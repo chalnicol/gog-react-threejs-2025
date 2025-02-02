@@ -2,8 +2,8 @@ import React from "react";
 
 const GuideAndGameRules = () => {
 	return (
-		<div className="p-6 bg-white shadow-lg rounded-md">
-			<div className="p-3 border border-gray-500 rounded text-sm bg-gray-100 mb-4">
+		<div className="p-6 rounded-md max-w-6xl mx-auto">
+			<div className="p-3 border border-gray-500 rounded text-sm bg-gray-50 mb-4">
 				<h5 className="font-semibold">Note:</h5>
 				<p className="text-gray-700">
 					The game does not save any progress. Once the browser is closed,
@@ -12,17 +12,17 @@ const GuideAndGameRules = () => {
 				</p>
 			</div>
 
-			<h1 className="text-2xl font-bold mb-4 border-y border-gray-500 py-1 bg-gray-200 px-3">
+			<h1 className="text-2xl font-bold mb-4 border border-gray-500 rounded py-2 bg-gray-200 px-4">
 				Game Guide & Rules
 			</h1>
 
 			{/* Using the Interface Section */}
 			<section className="mb-6 px-3">
 				<h2 className="text-xl font-semibold mb-2 underline">
-					Using the Interface
+					Pre-Game Interface
 				</h2>
 				<p className="text-gray-700 mb-4">
-					The game interface consists of several key panels :{" "}
+					The pre-game interface consists of several key panels :{" "}
 					<span className="font-semibold">Welcome Page</span>,{" "}
 					<span className="font-semibold">Online Players</span>,{" "}
 					<span className="font-semibold">View All Games</span>,{" "}
@@ -43,6 +43,7 @@ const GuideAndGameRules = () => {
 						<ul className="list-inside list-disc ml-4 my-1">
 							<li>
 								<strong>Game Type:</strong>
+
 								<ul className="ml-8">
 									<li>
 										<strong>Classic Mode</strong> - No time limits for
@@ -96,7 +97,7 @@ const GuideAndGameRules = () => {
 							</li>
 							<li>
 								<strong>Current Status</strong> :
-								<ul className="ml-7">
+								<ul className="ml-9">
 									<li>
 										<strong>Idle</strong> - Not in a room or game.
 									</li>
@@ -113,7 +114,7 @@ const GuideAndGameRules = () => {
 
 							<li>
 								<strong>Actions</strong> :
-								<ul className="ml-7">
+								<ul className="ml-9">
 									<li>
 										<span className="px-2 text-white text-xs font-bold rounded bg-orange-500">
 											Chat
@@ -137,7 +138,7 @@ const GuideAndGameRules = () => {
 						<ul className="list-inside list-disc ml-4 mt-2">
 							<li className="mb-2">
 								<strong>Create Game Options:</strong>
-								<ul className="ml-6 my-1">
+								<ul className="ml-9 my-1">
 									<li>
 										<strong>Game Type</strong>: Classic or Blitz
 									</li>
@@ -157,7 +158,7 @@ const GuideAndGameRules = () => {
 							<li>
 								<strong>Game List :</strong> For each game room, the
 								following information is displayed:
-								<ul className="ml-6 my-1">
+								<ul className="ml-9 my-1">
 									<li>
 										<strong> Game ID</strong>
 									</li>
@@ -178,7 +179,7 @@ const GuideAndGameRules = () => {
 									</li>
 									<li>
 										<strong>Actions</strong> (based on ownership) :
-										<ul className="ml-7">
+										<ul className="ml-4">
 											<li>
 												<span className="mx-0.5 px-2 text-white text-xs font-bold rounded bg-blue-500">
 													Join
@@ -255,10 +256,73 @@ const GuideAndGameRules = () => {
 			</section>
 
 			<hr className="border-gray-500 shadow my-5" />
+			{/* In-Game Interface */}
+			<section className="mb-6 px-3">
+				<h2 className="text-xl font-semibold mb-2 underline">
+					In-Game Interface
+				</h2>
+				<p className="text-gray-700 mb-4">
+					This interface consists of various elements that players use to
+					interact with the game, such as the game board, player info,
+					prompts, and controls.
+				</p>
+
+				<ul className="list-inside list-disc ml-4 my-1 space-y-2">
+					<li>
+						<strong>Game Board</strong> : Displays the game grid where
+						players position and move their pieces during gameplay.
+					</li>
+					<li>
+						<strong>Player Info</strong> : Shows the player's username,
+						turn indicator, time remaining (for blitz games), and a
+						"Ready" status to indicate when preparations are finished. It
+						also displays the "Play Again" indicator when player wishes to
+						play another round.
+					</li>
+					<li>
+						<strong>Prompt Messaging</strong> : Displays key messages
+						during the game, such as when the game is commencing, if it
+						has started, or any other important updates (auto-closes after
+						3 seconds or can be manually closed by the player).
+					</li>
+					<li>
+						<strong>Controls Panel</strong> : A panel at the bottom-right
+						of the screen that is shown when the game starts. Players can
+						toggle it to show or hide. Inside the panel:
+						<ul className="ml-8 my-1 list-inside list-disc space-y-1">
+							<li>
+								<strong>Ready Button</strong> : Indicates when the
+								player is ready to start the game. Only visible during
+								preparations phase.
+							</li>
+							<li>
+								<strong>Surrender Button</strong> : Quits the current
+								game without leaving, marking the surrendering player's
+								loss.
+							</li>
+							<li>
+								<strong>Leave Button</strong> : Always visible, allowing
+								the player to leave the game at any time..
+							</li>
+							<li>
+								<strong>Send Emoji</strong> : Displays 6 emoji buttons
+								players can send to the opposing player during the game
+								for interaction.
+							</li>
+						</ul>
+					</li>
+				</ul>
+			</section>
+
+			<hr className="border-gray-500 shadow my-5" />
 			{/* Game Rules */}
 			<section className="mb-6 px-3">
 				<h2 className="text-xl font-semibold mb-2 underline">Game Rules</h2>
-
+				<p className="text-gray-700 mb-4">
+					The game is turn-based, meaning players alternate taking turns to
+					move their pieces on the board. Each player must wait for their
+					opponent to complete their move before proceeding with their own.
+				</p>
 				<h3 className="font-semibold">Objective:</h3>
 				<p className="text-gray-700 mb-4 px-3">
 					The goal of the game is to strategically position and move your
@@ -270,6 +334,13 @@ const GuideAndGameRules = () => {
 					the start of their turn.
 				</p>
 
+				<h3 className="font-semibold">Setting Up Pieces:</h3>
+				<p className="text-gray-700 mb-4 px-3">
+					At the start of the game, each player must place their pieces
+					within the first three rows on their side of the board. Pieces
+					cannot be placed beyond this area during the initial setup phase.
+				</p>
+
 				<h3 className="font-semibold">Making A Challenge:</h3>
 				<p className="text-gray-700 mb-4 px-3">
 					A challenge occurs when one piece attempts to move into a square
@@ -278,6 +349,14 @@ const GuideAndGameRules = () => {
 					determined based on the specific rules of the game, with the
 					winning piece remaining on the square and the losing piece being
 					removed from the board.
+				</p>
+
+				<h3 className="font-semibold">Blitz Game Rule:</h3>
+				<p className="text-gray-700 mb-4 px-3">
+					In Blitz games, players are given a limited amount of time to
+					make their move. If a player fails to make a move within the
+					given time, they automatically lose the game. This ensures
+					fast-paced gameplay and adds an extra layer of challenge.
 				</p>
 
 				<h3 className="font-semibold">Challenge Mechanics:</h3>
@@ -318,7 +397,7 @@ const GuideAndGameRules = () => {
 				</ul>
 			</section>
 
-			<div className="text-center mt-12 mb-2">-- End of Page --</div>
+			<div className="text-center mt-12 mb-2">-- End --</div>
 		</div>
 	);
 };

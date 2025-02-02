@@ -144,7 +144,7 @@ const GameInterface = ({
 							emote={emote}
 							playAgain={players[0].playAgain}
 						/>
-						<div className="absolute sm:relative font-bold text-white h-10 sm:h-2/3 aspect-square border border-red-500 bg-red-600 flex items-center justify-center rounded-full">
+						<div className="absolute sm:relative font-bold text-white h-10 sm:h-2/3 aspect-square border border-red-500 bg-red-600 flex items-center justify-center rounded-full z-50">
 							VS
 						</div>
 						<PlayerIndicator
