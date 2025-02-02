@@ -13,7 +13,7 @@ const GuideAndGameRules = () => {
 			</div>
 
 			<h1 className="text-2xl font-bold mb-4 border-y border-gray-500 py-1 bg-gray-200 px-3">
-				Guide & Game Rules
+				Game Guide & Rules
 			</h1>
 
 			{/* Using the Interface Section */}
@@ -22,14 +22,19 @@ const GuideAndGameRules = () => {
 					Using the Interface
 				</h2>
 				<p className="text-gray-700 mb-4">
-					The game interface consists of several key panels: Quick Play,
-					Online Players, View All Games, Chats, and About. If you're
-					reading this, you’re likely on the Game Rules and Interface
-					panel, which is designed to help you navigate through the game’s
+					The game interface consists of several key panels :{" "}
+					<span className="font-semibold">Welcome Page</span>,{" "}
+					<span className="font-semibold">Online Players</span>,{" "}
+					<span className="font-semibold">View All Games</span>,{" "}
+					<span className="font-semibold">Chats</span>, and{" "}
+					<span className="font-semibold">About</span>. If you're reading
+					this, you're likely on the{" "}
+					<span className="font-semibold">Game Guide & Rules</span> panel,
+					which is designed to help you navigate through the game's
 					interface and understand the rules.
 				</p>
 
-				{/* Quick Play Panel */}
+				{/* welcome page */}
 				<div className="mb-4">
 					<h3 className="font-semibold">1. Welcome Page</h3>
 					<p className="text-gray-700">
@@ -40,12 +45,12 @@ const GuideAndGameRules = () => {
 								<strong>Game Type:</strong>
 								<ul className="ml-8">
 									<li>
-										<strong>Classic Mode</strong> – No time limits for
+										<strong>Classic Mode</strong> - No time limits for
 										preparation or turns.
 									</li>
 									<li>
-										<strong>Blitz Mode</strong> – Timed mode with:
-										<ul className="ml-8">
+										<strong>Blitz Mode</strong> - Timed mode with:
+										<ul className="ml-4">
 											<li>
 												<strong>45 seconds preparation time</strong>{" "}
 												(to arrange pieces).
@@ -62,12 +67,12 @@ const GuideAndGameRules = () => {
 								<strong>Opponent Type:</strong>
 								<ul className="ml-8">
 									<li>
-										<strong>Online Player</strong> – The system
+										<strong>Online Player</strong> - The system
 										searches for an available opponent in an open
 										room.
 									</li>
 									<li>
-										<strong>AI Opponent</strong> – Play against an
+										<strong>AI Opponent</strong> - Play against an
 										AI-controlled opponent.
 									</li>
 								</ul>
@@ -220,7 +225,7 @@ const GuideAndGameRules = () => {
 				{/* Game Rules and Interface Panel */}
 				<div className="mb-4">
 					<h3 className="font-semibold">
-						5. Guide and Game Rules Panel (You're Here!)
+						5. Game Guide & Rules Panel (You're Here!)
 					</h3>
 					<p className="text-gray-700">
 						In this panel, you can learn:
@@ -313,7 +318,7 @@ const GuideAndGameRules = () => {
 				</ul>
 			</section>
 
-			<div className="text-center mt-12 mb-4">-- End of Page --</div>
+			<div className="text-center mt-12 mb-2">-- End of Page --</div>
 		</div>
 	);
 };

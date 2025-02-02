@@ -186,7 +186,7 @@ const MainPage = ({ playerName }) => {
 		{ id: 2, name: "players", label: "View Online Players" },
 		{ id: 3, name: "rooms", label: "View All Games" },
 		{ id: 4, name: "chats", label: "Chats" },
-		{ id: 5, name: "guides", label: "Guide & Game Rules" },
+		{ id: 5, name: "guides", label: "Game Guide & Rules" },
 		{ id: 6, name: "about", label: "About" },
 	];
 
@@ -438,9 +438,29 @@ const MainPage = ({ playerName }) => {
 						{/* welcome page */}
 						{content === "welcome" && (
 							<div className="w-[95%] max-w-3xl  mx-auto">
-								<h1 className="text-lg font-bold border-y border-gray-400 text-gray-400 px-3 py-2 bg-gray-50 mt-8 text-center">
-									Welcome to Game of the Generals (Salpakan)
-								</h1>
+								<div className="mt-8 py-3">
+									<h1 className="text-lg md:text-xl  font-bold text-gray-500 px-3 mb-1 text-center">
+										Welcome to Game of the Generals (Salpakan)
+									</h1>
+									<p className="text-gray-700 text-[0.85rem] text-center">
+										If you're new here, be sure to visit the{" "}
+										<span
+											className="text-amber-600 font-semibold cursor-pointer"
+											onClick={() => setContent("guides")}
+										>
+											Game Guide and Rules
+										</span>{" "}
+										to learn how to play and get familiar with the
+										interface.
+									</p>
+								</div>
+
+								<div className="flex gap-x-1 justify-center mt-1 mb-6 border-t border-gray-300 w-40 mx-auto py-3">
+									<div className="w-2 aspect-square bg-gray-500 rounded-full"></div>
+									<div className="w-2 aspect-square bg-gray-500 rounded-full"></div>
+									<div className="w-2 aspect-square bg-gray-500 rounded-full"></div>
+								</div>
+
 								<FlashMessage
 									status={status}
 									onClose={() => setStatus(null)}
