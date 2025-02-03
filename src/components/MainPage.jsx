@@ -486,7 +486,7 @@ const MainPage = ({ playerName }) => {
 									/>
 								</div>
 
-								<div className="w-11/12 max-w-5xl bg-white shadow-lg p-4 mt-6 rounded mx-auto border border-gray-400">
+								<div className="w-11/12 max-w-5xl bg-white shadow-lg p-4 mt-6 mb-10 rounded mx-auto border border-gray-400">
 									<div className="flex items-center">
 										<h1 className="font-semibold text-lg ">Games</h1>
 										{/* <button className="ms-auto text-xs px-3 py-0.5 bg-sky-700 hover:bg-sky-600 rounded font-semibold text-white">

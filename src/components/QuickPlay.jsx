@@ -11,7 +11,7 @@ const QuickPlay = ({ onQuickPlay }) => {
 		});
 	};
 	return (
-		<div className="border border-gray-400 bg-white rounded shadow-lg mt-6 px-3 pt-2 pb-4">
+		<div className="border border-gray-400 bg-white rounded shadow-lg mt-6 mb-10 px-3 pt-2 pb-4">
 			<h1 className="font-semibold text-lg px-1">Quick Play</h1>
 			<hr className="border-0 border-b border-gray-400 shadow-lg my-1" />
 

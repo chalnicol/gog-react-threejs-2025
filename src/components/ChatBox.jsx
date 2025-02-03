@@ -49,7 +49,7 @@ const ChatBox = ({
 	};
 
 	return (
-		<div className="w-11/12 max-w-5xl bg-white shadow-lg p-4 mt-6 rounded mx-auto border border-gray-400">
+		<div className="w-11/12 max-w-5xl bg-white shadow-lg p-4 mt-6 mb-10 rounded mx-auto border border-gray-400">
 			<h1 className="font-semibold text-lg">Chats</h1>
 			<hr className="border-0 border-b border-gray-400 my-1" />
 
