@@ -71,58 +71,6 @@ const CreateGame = ({ reset, errors, onCreateGame }) => {
 						</button>
 					</div>
 				</div>
-
-				<div className="flex-1">
-					<span className="text-sm text-gray-600 font-medium">
-						Allow Spectators
-					</span>
-					<div className="flex text-lg font-medium mt-1 border border-gray-400 rounded">
-						<button
-							className={`flex-1 p-1 rounded-l ${
-								allowSpectators
-									? "bg-green-400 shadow-inner-soft-dark text-white"
-									: "bg-gray-200 hover:bg-gray-300"
-							}`}
-							onClick={(e) => setAllowSpectators(true)}
-							disabled={allowSpectators}
-						>
-							Yes
-						</button>
-						<button
-							className={`flex-1 p-1 rounded-r ${
-								!allowSpectators
-									? "bg-green-400 shadow-inner-soft-dark text-white"
-									: "bg-gray-200 hover:bg-gray-300"
-							}`}
-							onClick={(e) => setAllowSpectators(false)}
-							disabled={!allowSpectators}
-						>
-							No
-						</button>
-					</div>
-				</div>
-			</div>
-
-			<div className="flex flex-col sm:flex-row gap-x-3 gap-y-2 mt-3">
-				{/* <div className="flex-1">
-					<span className="text-sm text-gray-600 font-medium">
-						Set Game Password (Optional)
-					</span>
-					<input
-						className="w-full px-3 mt-1 py-2 border border-gray-400 rounded focus:outline-none"
-						type="text"
-						placeholder="enter a password"
-						value={password}
-						onChange={(e) => setPassword(e.target.value)}
-						maxLength={15}
-					/>
-					{errors?.password && (
-						<span className="text-xs text-red-500">
-							{errors.password}
-						</span>
-					)}
-				</div> */}
-
 				<div className="flex-1">
 					<span className="text-sm text-gray-600 font-medium">
 						Set Mode
@@ -152,7 +100,9 @@ const CreateGame = ({ reset, errors, onCreateGame }) => {
 						</button>
 					</div>
 				</div>
+			</div>
 
+			<div className="flex flex-col sm:flex-row gap-x-3 gap-y-2 mt-3">
 				<div className="flex-1">
 					<span className="text-sm text-gray-600 font-medium">
 						Invite Player (Required only for Private Match)

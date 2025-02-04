@@ -3,7 +3,7 @@ import React from "react";
 const GuideAndGameRules = () => {
 	return (
 		<div className="rounded-md max-w-6xl mx-auto mt-4 px-4">
-			<h1 className="text-2xl font-bold py-2 border border-gray-400 px-6 py-3 shadow rounded">
+			<h1 className="text-xl font-bold border border-gray-400 px-6 py-3 shadow rounded">
 				Game Guide & Rules
 			</h1>
 
