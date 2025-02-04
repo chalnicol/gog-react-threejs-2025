@@ -389,6 +389,12 @@ const MainPage = ({ playerName }) => {
 			<div className="fixed top-0 left-0 h-screen w-screen overflow-hidden">
 				<NavBar onMenuClick={handleMenuClick} />
 				<div className="h-[calc(100vh-3rem)] lg:flex relative">
+					{isSidebarOpen && (
+						<div
+							className="w-screen h-full absolute top-0 left-0 bg-gray-800 opacity-60"
+							onClick={() => setIsSidebarOpen((currValue) => !currValue)}
+						></div>
+					)}
 					{/* sidebar */}
 					<div
 						ref={sidebarRef}

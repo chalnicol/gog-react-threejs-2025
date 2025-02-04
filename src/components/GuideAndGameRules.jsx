@@ -2,13 +2,21 @@ import React from "react";
 
 const GuideAndGameRules = () => {
 	return (
-		<div className="p-6 rounded-md max-w-6xl mx-auto bg-gray-100">
-			<h1 className="text-2xl font-bold mb-4 rounded py-2 bg-gray-700 text-white px-4">
+		<div className="rounded-md max-w-6xl mx-auto mt-4 px-4">
+			<h1 className="text-2xl font-bold py-2 border border-gray-400 px-6 py-3 shadow rounded">
 				Game Guide & Rules
 			</h1>
 
+			<div className="px-6 py-3 border border-gray-400 rounded text-sm my-3 shadow">
+				<p className="text-gray-700">
+					<span className="font-bold">Note : </span>The game does not save
+					any progress. Once the browser is closed, all progress is lost.
+					Players will need to start fresh each time they enter the game.
+				</p>
+			</div>
+
 			{/* Using the Interface Section */}
-			<section className="mb-6 px-3">
+			<section className="mb-6 px-8 pt-6 pb-10 border border-gray-400 rounded shadow">
 				<h2 className="text-xl font-semibold mb-2 underline">
 					Pre-Game Interface
 				</h2>
@@ -246,9 +254,8 @@ const GuideAndGameRules = () => {
 				</div>
 			</section>
 
-			<hr className="border-gray-500 shadow my-5" />
 			{/* In-Game Interface */}
-			<section className="mb-6 px-3">
+			<section className="mb-6 px-8 pt-6 pb-10 border border-gray-400 rounded shadow">
 				<h2 className="text-xl font-semibold mb-2 underline">
 					In-Game Interface
 				</h2>
@@ -305,9 +312,8 @@ const GuideAndGameRules = () => {
 				</ul>
 			</section>
 
-			<hr className="border-gray-500 shadow my-5" />
 			{/* Game Rules */}
-			<section className="mb-6 px-3">
+			<section className="mb-6 px-8 pt-6 pb-10 border border-gray-400 rounded shadow">
 				<h2 className="text-xl font-semibold mb-2 underline">Game Rules</h2>
 				<p className="text-gray-700 mb-4">
 					The game is turn-based, meaning players alternate taking turns to
@@ -388,16 +394,12 @@ const GuideAndGameRules = () => {
 				</ul>
 			</section>
 
-			<div className="p-3 border border-gray-500 rounded text-sm bg-gray-50 mb-8 mt-10">
-				<h5 className="font-semibold">Note:</h5>
-				<p className="text-gray-700">
-					The game does not save any progress. Once the browser is closed,
-					all progress is lost. Players will need to start fresh each time
-					they enter the game.
-				</p>
-			</div>
-
 			{/* <div className="text-center  mb-2">-- End --</div> */}
+			<div className="flex gap-x-1 justify-center my-6">
+				<div className="w-2 h-2 bg-gray-500 rounded-full"></div>
+				<div className="w-2 h-2 bg-gray-500 rounded-full"></div>
+				<div className="w-2 h-2 bg-gray-500 rounded-full"></div>
+			</div>
 		</div>
 	);
 };

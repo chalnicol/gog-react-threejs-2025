@@ -4,16 +4,19 @@ import { faBars } from "@fortawesome/free-solid-svg-icons";
 
 const NavBar = ({ onMenuClick }) => {
 	return (
-		<nav className="h-[3rem] bg-gray-700 text-white relative">
-			<h1 className="absolute left-0 top-0 w-full h-full text-xl font-bold bg-green flex justify-center items-center">
-				Game of the Generals - 3D
-			</h1>
+		<nav className="h-[3rem] bg-gray-700 text-white relative flex">
 			<button
-				className="space-y-1 px-3 w-12 h-full absolute top-0 left-0 lg:hidden hover:bg-gray-600"
+				className="space-y-1 px-3 w-12 h-full lg:hidden hover:bg-gray-600"
 				onClick={() => onMenuClick()}
 			>
 				<FontAwesomeIcon icon={faBars} className="text-white" />
 			</button>
+			<h1 className="h-full font-semibold bg-green flex items-center ms-1 lg:ms-4">
+				Game of the Generals{" "}
+				<span className="ms-2 rounded-full flex justify-center text-xs items-center text-gray-800 font-bold bg-white w-[20px] aspect-square leading-none">
+					3D
+				</span>
+			</h1>
 		</nav>
 	);
 };

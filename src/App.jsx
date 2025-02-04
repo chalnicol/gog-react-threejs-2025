@@ -15,7 +15,15 @@ export default function App() {
 	return (
 		<div className="h-screen w-screen bg-gray-50">
 			{isMenuPageVisible ? (
-				<Suspense fallback={<div>Loading Main Page...</div>}>
+				<Suspense
+					fallback={
+						<div className="font-semibold h-screen w-screen flex items-center justify-center bg-gray-200">
+							<div className="px-5 py-2 border border-gray-500 shadow-lg rounded bg-gray-50">
+								Loading Main Page...
+							</div>
+						</div>
+					}
+				>
 					<MainPage playerName={username} />
 				</Suspense>
 			) : (

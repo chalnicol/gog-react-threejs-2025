@@ -11,7 +11,7 @@ const About = () => {
 					</h2>
 
 					<p>
-						Welcome to my Games of the Generals project—a modern
+						Welcome to my Game of the Generals project—a modern
 						reimagining of the classic Filipino strategy game! This app
 						merges the timeless tactical gameplay of the original with
 						cutting-edge technology to create an immersive, visually
@@ -29,7 +29,7 @@ const About = () => {
 						As the builder of this app, my goal is to preserve the spirit
 						of this beloved game while crafting a platform that’s
 						accessible and enjoyable for a modern audience. Although I am
-						not the creator of Games of the Generals, I am proud to
+						not the creator of Game of the Generals, I am proud to
 						contribute to its legacy by developing this digital version
 						for enthusiasts and newcomers alike.
 					</p>
@@ -59,7 +59,7 @@ const About = () => {
 						learning and my drive to create meaningful experiences through
 						software development. When I’m not coding, I’m exploring new
 						technologies, experimenting with creative projects, or diving
-						deep into strategy games like Games of the Generals.
+						deep into strategy games like Game of the Generals.
 					</p>
 					<p>
 						If you're interested in learning more about me or working with
