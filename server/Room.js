@@ -201,8 +201,8 @@ class Room {
 
 	generateAIPosition() {
 		this.clearGrid(1);
-		const newPost = this.generateRandomPiecesPosition(1);
-		// const newPost = this.generateFixedPosition();
+		// const newPost = this.generateRandomPiecesPosition(1);
+		const newPost = this.generateFixedPosition();
 
 		newPost.forEach((post, i) => {
 			this.pieces[i + 21].row = post.row;

@@ -20,10 +20,12 @@ class Player {
 		this.roomId = roomId; //
 		this.status = "waiting";
 	}
+
 	joinRoom(roomId) {
 		this.roomId = roomId;
 		this.status = "playing";
 	}
+
 	setStatus(status) {
 		this.status = status;
 	}
@@ -40,6 +42,7 @@ class Player {
 		this.playAgain = false;
 		// console.log("player reset");
 	}
+
 	reset() {
 		this.wins = 0;
 		this.loss = 0;

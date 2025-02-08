@@ -120,7 +120,7 @@ const PlayerIndicator = ({
 				)}
 				{phase == "end" && playAgain && (
 					<div className="text-[0.65rem] font-semibold rounded px-1.5 py-0.5 leading-snug bg-sky-700 text-white flex justify-center items-center">
-						PLAY AGAIN
+						REMATCH
 					</div>
 				)}
 			</div>
