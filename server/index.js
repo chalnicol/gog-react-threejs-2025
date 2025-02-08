@@ -256,10 +256,10 @@ const switchTurn = (roomId) => {
 			startClock(roomId);
 		}
 		if (room.vsAi && room.players[1].turn === room.turn) {
-			setTimeout(() => aiMove(roomId), 500);
+			setTimeout(() => aiMove(roomId), 1000);
 		}
 	} else {
-		setTimeout(() => endGame(roomId), 10);
+		setTimeout(() => endGame(roomId), 1000);
 	}
 
 	let toSendData = [];
