@@ -2,27 +2,42 @@ import * as THREE from "three";
 import gsap from "gsap";
 
 class Piece {
-	constructor(playerIndex, index, row, col, color, rankValue) {
+	constructor(playerIndex, index, row, col, color, rankValue, texture) {
 		// Create the piece..
 		this.index = index;
 		this.row = row;
 		this.col = col;
 		this.tileIndex = row * 9 + col;
 		this.playerIndex = playerIndex;
-		this.rankValue = rankValue;
 		this.color = color;
 		this.isEnabled = false;
 		this.isSelected = false;
 		this.isCaptured = false;
 		this.anim = null;
 
-		this.createMesh();
-		if (rankValue !== null && rankValue !== undefined) this.addRank();
+		//rank..
+		if (rankValue !== null && rankValue !== undefined) {
+			this.rankValue = rankValue;
+		} else {
+			this.rankValue = 15;
+		}
+
+		this.mesh = new THREE.Group();
+
+		this.init(texture);
 	}
 
-	createMesh() {
-		const pieceGroup = new THREE.Group();
+	init(texture) {
+		// const pieceGroup = new THREE.Group();
 
+		const clickAreaGeometry = new THREE.BoxGeometry(0.8, 1, 0.4);
+		const clickAreaMaterial = new THREE.MeshBasicMaterial({
+			visible: false,
+		});
+		const clickArea = new THREE.Mesh(clickAreaGeometry, clickAreaMaterial);
+		this.mesh.add(clickArea);
+
+		//create mesh..
 		const clr = this.color == 0 ? 0xffffff : 0x000000;
 
 		const pieceMaterial = new THREE.MeshBasicMaterial({ color: clr });
@@ -47,54 +62,65 @@ class Piece {
 		vertBorder.position.set(0, 0.26, 0.04);
 		vertBorder.rotation.x = -Math.PI / 5;
 
-		pieceGroup.add(vert, vertBorder, base, baseBorder);
+		this.mesh.add(vert, vertBorder, base, baseBorder);
 
-		//set pieceGroup rotation..
-		if (this.playerIndex !== 0) {
-			pieceGroup.rotation.y = Math.PI; // Rotate piece 180 degrees for self-placement
-		}
-
-		//set pieceGroup position..
-		const x = this.col - 9 / 2 + 0.5;
-		const z = this.row - 8 / 2 + 0.5;
-
-		pieceGroup.position.set(x, 0.7, z);
-
-		this.mesh = pieceGroup;
-	}
-
-	addRank() {
-		//apply rank with texture..
-		const texturePath = `/game/assets/images/ranks_${
-			this.color == 0 ? "white" : "black"
-		}.png`;
-		const texture = new THREE.TextureLoader().load(texturePath);
-		texture.generateMipmaps = false; // Disable mipmaps
-		texture.minFilter = THREE.LinearFilter;
-
-		texture.wrapS = THREE.RepeatWrapping;
-		texture.wrapT = THREE.RepeatWrapping;
-		texture.repeat.set(1 / 3, 1 / 5);
+		//create ranks..
 
 		const column = this.rankValue % 3;
 		const row = Math.floor(this.rankValue / 3); // Floor division to get the row number
 
-		texture.offset.set(column / 3, 1 - (row + 1) / 5); // Adjust offset
+		const pieceTexture = texture.clone();
+		pieceTexture.offset.set(column / 3, 1 - (row + 1) / 6);
 
 		const planeGeometry = new THREE.PlaneGeometry(0.79, 0.51);
 		const planeMaterial = new THREE.MeshBasicMaterial({
-			map: texture, // Apply the texture
+			map: pieceTexture, // Apply the texture
 		});
 		const plane = new THREE.Mesh(planeGeometry, planeMaterial);
 		plane.position.set(0, 0.28, 0.06);
 		plane.rotation.x = -Math.PI / 5;
 
 		this.mesh.add(plane);
+
+		//set pieceGroup position..
+		const x = this.col - 9 / 2 + 0.5;
+		const z = this.row - 8 / 2 + 0.5;
+
+		this.mesh.position.set(x, 0.7, z);
+
+		//set pieceGroup rotation..
+		if (this.playerIndex !== 0) {
+			this.mesh.rotation.y = Math.PI; // Rotate piece 180 degrees for self-placement
+		}
+
+		//drop..
+		gsap.to(this.mesh.position, {
+			y: 0.06,
+			duration: (i) => {
+				return Math.random() * 1 + 0.2;
+			},
+			ease: "bounce.out",
+			delay: 0.3,
+		});
+	}
+
+	updateRank() {
+		//update rank with texture..
+		const column = this.rankValue % 3;
+		const row = Math.floor(this.rankValue / 3);
+
+		// Loop through this.mesh children and find the plane with the texture
+		this.mesh.children.forEach((child) => {
+			if (child.isMesh && child.material.map) {
+				child.material.map.offset.set(column / 3, 1 - (row + 1) / 6);
+				child.material.map.needsUpdate = true; // Tell Three.js to refresh the texture
+			}
+		});
 	}
 
 	showRank(rank) {
 		this.rankValue = rank;
-		this.addRank();
+		this.updateRank();
 		this.rotate();
 	}
 

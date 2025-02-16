@@ -179,10 +179,6 @@ class ThreeJSGame extends EventEmitter {
 
 		raycaster.setFromCamera(mouse, this.camera);
 
-		const tilesIntersects = raycaster.intersectObjects(
-			this.clickableTiles,
-			true
-		);
 		const piecesIntersects = raycaster.intersectObjects(
 			this.clickablePieces,
 			true
@@ -190,13 +186,20 @@ class ThreeJSGame extends EventEmitter {
 
 		if (piecesIntersects.length > 0) {
 			const clickedPiece = piecesIntersects[0].object;
-			const pieceIndex = this.clickablePieces.indexOf(clickedPiece);
+			const pieceIndex = this.clickablePieces.findIndex(
+				(obj) => obj.id === clickedPiece.id
+			);
+
 			if (pieceIndex !== -1) {
 				this.pieceClicked(pieceIndex);
 			}
 			return;
 		}
 
+		const tilesIntersects = raycaster.intersectObjects(
+			this.clickableTiles,
+			true
+		);
 		if (tilesIntersects.length > 0) {
 			const clickedTile = tilesIntersects[0].object;
 			const tileIndex = this.clickableTiles.indexOf(clickedTile);
@@ -231,32 +234,40 @@ class ThreeJSGame extends EventEmitter {
 	createPlayerPieces(playerIndex, piecesData = []) {
 		if (!Array.isArray(piecesData) || piecesData.length === 0) return;
 
-		piecesData.forEach((pieceData, i) => {
-			const { row, col, color, rank } = pieceData;
-			const piece = new Piece(playerIndex, i, row, col, color, rank);
-			this.pieces.push(piece);
-			this.tiles[row * 9 + col].setIndexes(playerIndex, i);
+		const pieceColor = piecesData[0].color;
+		const texturePath = `/game/assets/images/ranks_${
+			pieceColor == 0 ? "white" : "black"
+		}.png`;
 
-			if (playerIndex !== 1) {
-				this.clickablePieces.push(piece.mesh.children[0]);
-			}
-			this.scene.add(piece.mesh);
-			// console.log(row, col, row * 9 + col);
+		new THREE.TextureLoader().load(texturePath, (texture) => {
+			texture.generateMipmaps = true; // Disable mipmaps
+			texture.minFilter = THREE.LinearFilter;
+
+			texture.wrapS = THREE.RepeatWrapping;
+			texture.wrapT = THREE.RepeatWrapping;
+			texture.repeat.set(1 / 3, 1 / 6);
+
+			//create pieces..
+			piecesData.forEach((pieceData, i) => {
+				const { row, col, color, rank } = pieceData;
+				const piece = new Piece(
+					playerIndex,
+					i,
+					row,
+					col,
+					color,
+					rank,
+					texture
+				);
+				this.pieces.push(piece);
+				this.tiles[row * 9 + col].setIndexes(playerIndex, i);
+
+				if (playerIndex !== 1) {
+					this.clickablePieces.push(piece.mesh.children[0]);
+				}
+				this.scene.add(piece.mesh);
+			});
 		});
-
-		const pieceMesh = this.pieces
-			.filter((piece) => piece.playerIndex === playerIndex)
-			.map((piece) => piece.mesh.position);
-
-		const anim = gsap.to(pieceMesh, {
-			y: 0.06, // Bigger wave height
-			duration: (i) => {
-				return Math.random() * 0.8 + 0.2;
-			},
-			ease: "bounce.out",
-			delay: 0.3,
-		});
-		// anim.timeScale(1.5);
 	}
 
 	showOpponentRanks(ranks) {

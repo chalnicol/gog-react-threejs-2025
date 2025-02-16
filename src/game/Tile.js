@@ -11,13 +11,14 @@ class Tile {
 		// this.isResided = false;
 		this.pieceIndex = null;
 		this.playerIndex = null;
-		this.mesh = this.createMesh();
 		this.blinkAnim = null;
+
+		this.mesh = new THREE.Group();
+
+		this.init();
 	}
 
-	createMesh() {
-		const pieceGroup = new THREE.Group();
-
+	init() {
 		const clr = this.color === "blue" ? 0x0000ff : 0xff0000;
 
 		const boxGeometry = new THREE.BoxGeometry(1, 0.1, 1);
@@ -28,13 +29,11 @@ class Tile {
 		const insideBoxMaterial = new THREE.MeshBasicMaterial({ color: clr });
 		const insideSquare = new THREE.Mesh(insideBoxGeometry, insideBoxMaterial);
 
-		pieceGroup.add(square, insideSquare);
+		this.mesh.add(square, insideSquare);
 
 		const x = this.col - 9 / 2 + 0.5;
 		const z = this.row - 8 / 2 + 0.5;
-		pieceGroup.position.set(x, 0, z);
-
-		return pieceGroup;
+		this.mesh.position.set(x, 0, z);
 	}
 
 	blink() {
