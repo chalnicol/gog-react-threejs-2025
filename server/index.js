@@ -8,6 +8,7 @@ import path from "path";
 import { fileURLToPath } from "url";
 import { dirname } from "path";
 
+// To get __dirname with ES modules (because __dirname is not available in ES modules)
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
@@ -15,6 +16,7 @@ const __dirname = dirname(__filename);
 const app = express();
 const server = http.createServer(app);
 
+// Initialize Socket.io with CORS settings
 const io = new Server(server, {
 	cors: {
 		origin: "*", // Allow all origins for now (adjust for production)
@@ -22,12 +24,15 @@ const io = new Server(server, {
 	},
 });
 
+// Serve static files from the 'dist' folder (for production React build)
 app.use(express.static(path.join(__dirname, "../dist")));
 
+// All routes will serve the 'index.html' from the React build directory
 app.get("*", (req, res) => {
 	res.sendFile(path.resolve(__dirname, "../dist", "index.html"));
 });
 
+// Set the port from environment variable or default to 3000
 const PORT = process.env.SOCKET_PORT || 3000;
 
 //game codes..

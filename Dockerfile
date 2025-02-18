@@ -9,7 +9,7 @@ COPY package*.json ./
 
 # Install backend dependencies (express)
 RUN npm install
-
+RUN npm run build
 
 # Copy backend code
 COPY ./server ./server
